@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Game Theory Web</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css">
+
+    <script src="/js/jquery-3.1.1.min.js"></script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+    <!-- Formulas support -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js" integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous"></script>
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js" integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
+<!--    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>-->
+<!--    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>-->
+
+    <!--Graphics support-->
+    <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-base.min.js"></script>
+
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+    <link rel="stylesheet" href="/css/bootstrap-grid.css">
+
+    <style>
+        .customButton {
+            background: white;
+            display:block;
+            border:1px solid black;
+            color: black;
+            text-decoration:none;
+            text-align:center;
+            opacity:.8;
+            letter-spacing: 1px;
+            -webkit-transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750);
+            -moz-transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750);
+            -o-transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750);
+            transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
+        }
+
+        .customButton:hover {
+            cursor: pointer;
+            background: black;
+            border:1px solid white;
+            color: white;
+            opacity:1;
+            letter-spacing: 4px;
+            -webkit-transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750);
+            -moz-transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750);
+            -o-transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750);
+            transition: all 300ms cubic-bezier(0.250, 0.250, 0.750, 0.750); /* linear */
+        }
+
+        td {
+            padding: 10px
+        }
+
+        th {
+            padding: 10px
+        }
+
+        input {
+            width: 70px;
+        }
+
+        .modal-dialog{
+            overflow-y: initial !important
+        }
+
+        .modal-body{
+            overflow-y: auto;
+        }
+
+        @font-face {
+            font-family: 'Dosis', sans;
+            font-style: normal;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+<div class="container" align="center" style="font-family: Exo2Regular,serif; width: 50%">
+    <h1>ТЕОРИЯ ИГР И ИССЛЕДОВАНИЕ ОПЕРАЦИЙ</h1>
+    <h3>Лабораторные работы</h3>
+    <hr>
+    <button id="lab1InverseMatrixAndBrownRobinsonMethodsBtn" type="button" class="customButton">
+        Лабораторная работа №1: "Аналитический и численный (Брауна - Робинсон) методы решения антагонистической игры в смешанных стратегиях"
+    </button>
+    <hr>
+    <button id="lab2AnalyticalAndNumericalMethodsBtn" type="button" class="customButton">
+        Лабораторная работа №2: "Аналитический и численный методы решения выпукло-вогнутой антагонистической игры"
+    </button>
+    <hr>
+    <button id="lab3NonantagonisticGamesBtn" type="button" class="customButton">
+        Лабораторная работа №3: "Неантагонистические игры. Критерии выбора оптимальных стратегий в бескоалиционных играх нескольких игроков"
+    </button>
+    <hr>
+    <button id="lab4ReverseInductionMethodBtn" type="button" class="customButton">
+        Лабораторная работа №4: "Позиционные игры. Метод обратной индукции"
+    </button>
+    <hr>
+    <button id="lab5CooperativeGamesBtn" type="button" class="customButton">
+        Лабораторная работа №5: "Рациональный дележ в кооперативных играх"
+    </button>
+    <hr>
+    <button id="lab6InformationConfrontationBtn" type="button" class="customButton">
+        Лабораторная работа №6: "Информационное противоборство"
+    </button>
+    <hr>
+    <button id="rk1Btn" type="button" class="customButton">
+        Рубежный контроль №1
+    </button>
+    <hr>
+    <button id="rk2Btn" type="button" class="customButton">
+        Рубежный контроль №2
+    </button>
+
+    <!--Lab1 modal dialog-->
+    <div class="modal fade" id="lab1InverseMatrixAndBrownRobinsonMethodsDialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Лабораторная работа №1: "Аналитический и численный (Брауна - Робинсон)
+                        методы решения антагонистической игры в смешанных стратегиях"</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Цель работы</h3>
+                    <p>Изучить аналитический (обратной матрицы) и численный (Брауна - Робинсон) методы нахождения
+                        смешанных стратегий в антагонистической игре двух лиц в нормальной форме.</p>
+                    <hr>
+                    <h3>Постановка задачи</h3>
+                    <p>Найти цену игры и оптимальные стратегии обоих игроков методами обратной матрицы и
+                        Брауна – Робинсон. Сравнить полученные результаты.</p>
+                    <hr>
+                    <h3>Ход работы</h3>
+                    <label>Размерность матрицы стратегий :
+                        (<select id="lab1MatrixRowsCount" class="select matrixRowsCount" tableBodyId="lab1MatrixStrategyBody"></select>x<select id="lab1MatrixColumnsCount" class="select matrixColumnsCount" tableBodyId="lab1MatrixStrategyBody"></select>)
+                    </label>
+                    <br>
+                    <label for="matrixStrategy">Матрица стратегий* :
+                        <table id="matrixStrategy">
+                            <tbody id="lab1MatrixStrategyBody" class="matrixStrategyBody"></tbody>
+                        </table>
+                    </label>
+                    <br>
+                    <p>* Допустимо вводить следующие данные в ячейки таблицы: 1; -1; 01; -01; 0,1; -0,1; 0.1; -0.1; 1/2; -1/2; 1:2; -1:2; -1/-2; -1:-2</p>
+                    <button id="lab1Execute" type="button" class="btn btn-primary">Рассчитать</button>
+                    <br>
+                    <label>
+                        <form id="lab1ExecuteByFileForm" action="/game_theory/api/lab1/by_file/" method="post" enctype="multipart/form-data">
+                            <input id="file" name="file" type="file" class="form-control">
+                            <button id="lab1ExecuteByFile" type="submit" class="btn btn-success">
+                                Задать матрицу таблицей Excel и рассчитать
+                            </button>
+                        </form>
+                    </label>
+                    <h4><b>Аналитический метод</b></h4>
+                    <div id="inverseMatrixMethodResult"></div>
+                    <h4><b>Численный метод Брауна – Робинсон</b></h4>
+                    <div id="brownRobinsonMethodResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--Lab2 modal dialog-->
+    <div class="modal fade" id="lab2AnalyticalAndNumericalMethodsDialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Лабораторная работа №2: "Аналитический и численный
+                        методы решения выпукло-вогнутой антагонистической игры"</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Цель работы</h3>
+                    <p>Найти оптимальные стратегии непрерывной выпукло-вогнутой антагонистической игры
+                        аналитическим и численным методами.</p>
+                    <hr>
+                    <h3>Ход работы</h3>
+                    <label>Функция ядра :
+                        <br>
+                        \(H(x,y) = \)<input class="lab2Coefficients" degrees="2,0" style="width: 3em;" placeholder="a" />\(x^{2} + \)<input class="lab2Coefficients" degrees="0,2" style="width: 3em" placeholder="b" />\(y^{2} + \)<input class="lab2Coefficients" degrees="1,1" style="width: 3em" placeholder="c" />\(xy + \)<input class="lab2Coefficients" degrees="1,0" style="width: 3em" placeholder="d" />\(x + \)<input class="lab2Coefficients" degrees="0,1" style="width: 3em" placeholder="e" />\(y\)
+                    </label>
+                    <br>
+                    <p>* Допустимо вводить следующие данные в ячейки: 1; -1; 01; -01; 0,1; -0,1; 0.1; -0.1; 1/2; -1/2; 1:2; -1:2; -1/-2; -1:-2</p>
+                    <button id="lab2Execute" type="button" class="btn btn-primary">Рассчитать</button>
+                    <br>
+                    <h4><b>Аналитическое решение</b></h4>
+                    <div id="analyticalConvexConcaveGamesMethodResult"></div>
+                    <h4><b>Численное решение</b></h4>
+                    <div id="numericalConvexConcaveGamesMethodResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--Lab3 modal dialog-->
+    <div class="modal fade" id="lab3NashPoretoMethodsDialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Лабораторная работа №3: "Неантагонистические игры. Критерии выбора
+                        оптимальных стратегий в бескоалиционных играх нескольких игроков"</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Цель работы</h3>
+                    <p>Изучить критерии выбора стратегий в неантагонистической бескоалиционной игре двух игроков на
+                        основе равновесия Нэша и оптимальности по Парето. Проверить данные критерии на примере игр
+                        "Перекресток", "Семейный спор", "Дилемма заключенного". Исследовать свойства оптимальных решений
+                        неантагонистических бескоалиционных игр на примере биматричных (2 x 2)-игр.</p>
+                    <hr>
+                    <h3>Постановка задачи</h3>
+                    <p>
+                       1. Сгенерировать случайную биматричную игру (10 x 10). Найти ситуации, равновесные по Нэшу и
+                        оптимальные по Парето, а также пересечение множеств этих ситуаций. Выполнить проверку
+                        реализованных алгоритмов на примере трех известных игр: "Перекресток", "Семейный спор",
+                        "Дилемма заключенного".
+                       2. Для заданной биматричной (2 x 2)-игры Г(A, B), пользуясь теоремами о свойствах оптимальных
+                        решений, найти ситуации, равновесные по Нэшу, для исходной игры и для ее смешанного расширения.
+                    </p>
+                    <hr>
+                    <h3>Ход работы</h3>
+                    <label>Размерность генерируемой матрицы :
+                        (<select id="lab3GenMatrixRowsCount" class="select matrixRowsCount" tableBodyId="lab3MatrixStrategyBody"></select>x<select id="lab3GenMatrixColumnsCount" class="select matrixColumnsCount" tableBodyId="lab3MatrixStrategyBody"></select>)
+                    </label>
+                    <br>
+                    <button id="lab3Generate" type="button" class="btn btn-primary">Сгенерировать</button>
+                    <br>
+                    <label for="genMatrixStrategy">Сгенерированная биматричная игра :
+                        <table id="genMatrixStrategy">
+                            <tbody id="lab3MatrixStrategyBody" class="matrixStrategyBody"></tbody>
+                        </table>
+                    </label>
+                    <br>
+                    <button id="lab3ExecuteGeneratedMatrix" type="button" class="btn btn-primary">
+                        Найти равновесие по Нэшу и оптимальность по Парето для сгенерированной матрицы
+                    </button>
+                    <div id="generatedBiMatrixNashPoretoResult"></div>
+                    <hr>
+                    <label> Игра "Перекресток" *
+                        <br>
+                        <table class="table-bordered">
+                            <tbody id="gameCrossroadBody">
+                                <tr><td>1 \ 1</td><td>1-e \ 2</td></tr>
+                                <tr><td>2 \ 1-e</td><td>0 \ 0</td></tr>
+                            </tbody>
+                        </table>
+                    </label>
+                    <p>* e = 0.01</p>
+                    <div id="checkNashPoretoGameCrossroadResult"></div>
+                    <label> Игра "Семейный спор"
+                        <br>
+                        <table class="table-bordered">
+                            <tbody id="gameFamilyBody">
+                                <tr><td>4 \ 1</td><td>0 \ 0</td></tr>
+                                <tr><td>0 \ 0</td><td>1 \ 4</td></tr>
+                            </tbody>
+                        </table>
+                    </label>
+                    <br>
+                    <div id="checkNashPoretoGameFamilyResult"></div>
+                    <label> Игра "Дилемма заключенного"
+                        <table class="table-bordered">
+                            <tbody id="gamePrisonerBody">
+                                <tr><td>-5 \ -5</td><td>0 \ -10</td></tr>
+                                <tr><td>-10 \ 0</td><td>-1 \ -1</td></tr>
+                            </tbody>
+                        </table>
+                    </label>
+                    <br>
+                    <div id="checkNashPoretoGamePrisonerResult"></div>
+                    <button id="lab3checkNashPoreto" type="button" class="btn btn-primary">
+                        Выполнить проверку на примере задач "Перекресток", "Семейный спор", "Дилемма заключенного"
+                    </button>
+                    <hr>
+                    <label>Размерность биматрицы :
+                        (<select id="lab3MatrixRowsCount" class="select matrixRowsCount" tableBodyId="lab3BiMatrixStrategyBody"></select>x<select id="lab3MatrixColumnsCount" class="select matrixColumnsCount" tableBodyId="lab3BiMatrixStrategyBody"></select>)
+                    </label>
+                    <br>
+                    <label for="biMatrixStrategy">Матрица стратегий* :
+                        <table id="biMatrixStrategy">
+                            <tbody id="lab3BiMatrixStrategyBody" class="matrixStrategyBody"></tbody>
+                        </table>
+                    </label>
+                    <br>
+                    <p>* Допустимо вводить следующие данные в ячейки таблицы: 1; -1; 01; -01; 0,1; -0,1; 0.1; -0.1; 1/2; -1/2; 1:2; -1:2; -1/-2; -1:-2</p>
+                    <p>* \ - для разделения игроков</p>
+                    <button id="lab3Execute" type="button" class="btn btn-primary">Рассчитать</button>
+                    <br>
+                    <div id="nashPoretoResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--RK1 modal dialog-->
+    <div class="modal fade" id="rk1Dialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Рубежный контроль №1</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Ход работы</h3>
+                    <label>Размерность матрицы стратегий :
+                        (<select id="rk1MatrixRowsCount" class="select matrixRowsCount" tableBodyId="rk1MatrixStrategyBody"></select>x<select id="rk1MatrixColumnsCount" class="select matrixColumnsCount" tableBodyId="rk1MatrixStrategyBody"></select>)
+                    </label>
+                    <br>
+                    <label for="rk1matrixStrategy">Матрица стратегий* :
+                        <table id="rk1matrixStrategy">
+                            <tbody id="rk1MatrixStrategyBody" class="matrixStrategyBody"></tbody>
+                        </table>
+                    </label>
+                    <br>
+                    <p>* Допустимо вводить следующие данные в ячейки таблицы: 1; -1; 01; -01; 0,1; -0,1; 0.1; -0.1; 1/2; -1/2; 1:2; -1:2; -1/-2; -1:-2</p>
+                    <button id="rk1Execute" type="button" class="btn btn-primary">Рассчитать</button>
+                    <br>
+                    <label>
+                        <form id="rk1ExecuteByFileForm" action="/game_theory/api/rk1/by_file/" method="post" enctype="multipart/form-data">
+                            <input id="rk1file" name="rk1file" type="file" class="form-control">
+                            <button id="rk1ExecuteByFile" type="submit" class="btn btn-success">
+                                Задать матрицу таблицей Excel и рассчитать
+                            </button>
+                        </form>
+                    </label>
+                    <h4><b>Монотонный итерационный метод</b></h4>
+                    <div id="rk1Result"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--RK2 modal dialog-->
+    <div class="modal fade" id="rk2Dialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Рубежный контроль №2</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Ход работы</h3>
+                    <label>
+                        Количество точек ищущего :
+                        <input id="pointsCount" type="text" class="form-control">
+                        Размер ребра куба :
+                        <input id="cubeDimensions" type="text" class="form-control">
+                        Эпсилон-окрестность обнаружения :
+                        <input id="epsilon" type="text" class="form-control">
+                        <button id="rk2Execute" class="btn btn-success">
+                            Смоделировать игру
+                        </button>
+                        <button id="rk2generateGame" class="btn btn-success">
+                            Показать точки прячущегося
+                        </button>
+                    </label>
+                    <br>
+                    <br>
+                    <canvas id="canvas"></canvas>
+                    <br>
+                    <br>
+                    <div id="rk2Result"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    $(function () {
+        init()
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Глобальные переменные
+        // ---------------------------------------------------------------------------------------------------------
+
+        var matrixStrategyRowsCount = []
+        var matrixStrategyColumnsCount = []
+
+        var coefficientsAndDegrees = []
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка нажатий на кнопки для показа модальных окон
+        // ---------------------------------------------------------------------------------------------------------
+
+        $("#lab1InverseMatrixAndBrownRobinsonMethodsBtn").on("click", function () {
+            initMatrixData()
+            $('#lab1InverseMatrixAndBrownRobinsonMethodsDialog').modal('show')
+        })
+
+        $("#lab2AnalyticalAndNumericalMethodsBtn").on("click", function () {
+            $('#lab2AnalyticalAndNumericalMethodsDialog').modal('show')
+        })
+
+        $("#lab3NonantagonisticGamesBtn").on("click", function () {
+            initMatrixData()
+            $('#lab3NashPoretoMethodsDialog').modal('show')
+        })
+
+        $("#lab4ReverseInductionMethodBtn").on("click", function () {
+            initMatrixData()
+            $('#lab4ReverseInductionMethodDialog').modal('show')
+        })
+
+        $("#lab5CooperativeGamesBtn").on("click", function () {
+            initMatrixData()
+            $('#lab5CooperativeGamesDialog').modal('show')
+        })
+
+        $("#lab6InformationConfrontationBtn").on("click", function () {
+            initMatrixData()
+            $('#lab6InformationConfrontationDialog').modal('show')
+        })
+
+        $("#rk1Btn").on("click", function () {
+            initMatrixData()
+            $('#rk1Dialog').modal('show')
+        })
+
+        $("#rk2Btn").on("click", function () {
+            $('#rk2Dialog').modal('show')
+        })
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне лабораторной работы №1
+        // ---------------------------------------------------------------------------------------------------------
+
+        $("#lab1Execute").on("click", function () {
+            $("#inverseMatrixMethodResult").html("")
+            $('#brownRobinsonMethodResult').html("")
+            var matrixStrategy = []
+            $("#lab1MatrixStrategyBody tr").each(function () {
+                var matrixStrategyRow = []
+                $(this).children('td').each(function (index, td) { matrixStrategyRow.push(td.firstChild.value) })
+                matrixStrategy.push(matrixStrategyRow)
+            })
+            if (matrixStrategyRowsCount["lab1MatrixStrategyBody"] === matrixStrategyColumnsCount["lab1MatrixStrategyBody"]) {
+                sendRequest('post', '/game_theory/api/lab1/inverse_matrix_method', JSON.stringify(matrixStrategy), function(response) {
+                    inverseMatrixMethodProcessor(response)
+                })
+                sendRequest('post', '/game_theory/api/lab1/brown_robinson_method', JSON.stringify(matrixStrategy), function(response) {
+                    brownRobinsonMethodProcessor(response)
+                })
+            } else {
+                alert("FAIL!\nЗадана неквадратная матрица")
+            }
+        })
+
+        $('#lab1ExecuteByFile').on("click", function () {
+            $('#lab1ExecuteByFileForm').submit(function(e) {
+                e.preventDefault()
+                var $that = $(this)
+                var formData = new FormData($that.get(0))
+                $("#inverseMatrixMethodResult").html("")
+                $('#brownRobinsonMethodResult').html("")
+                sendRequest($that.attr('method'), $that.attr('action') + "inverse_matrix_method", formData, function(response) {
+                    inverseMatrixMethodProcessor(response)
+                })
+                sendRequest($that.attr('method'), $that.attr('action') + "brown_robinson_method", formData, function(response) {
+                    brownRobinsonMethodProcessor(response)
+                })
+            })
+        })
+
+        function inverseMatrixMethodProcessor(response) {
+            if (response.success) {
+                var firstGamerStrategy = katex.renderToString("x^*={uC^{-1} \\over uC^{-1}u^{T}}=("+response.result.firstGamerStrategy.join(",")+"),")
+                var secondGamerStrategy = katex.renderToString("y^*={C^{-1}u^{T} \\over uC^{-1}u^{T}}=("+response.result.secondGamerStrategy.join(",")+"),")
+                var gameCost = katex.renderToString("v={1 \\over uC^{-1}u^{T}}="+response.result.gameCost+",")
+                var unitVectorElements = []
+                for (var index = 0; index < response.result.firstGamerStrategy.length; index++) {
+                    unitVectorElements.push("1")
+                }
+                var unitVector = "где вектор " + katex.renderToString("u=("+unitVectorElements.join(",")+") \\in R^{"+response.result.firstGamerStrategy.length+"}.")
+                $("#inverseMatrixMethodResult").append(firstGamerStrategy)
+                $("#inverseMatrixMethodResult").append('<br><br>')
+                $("#inverseMatrixMethodResult").append(secondGamerStrategy)
+                $("#inverseMatrixMethodResult").append('<br><br>')
+                $("#inverseMatrixMethodResult").append(gameCost)
+                $("#inverseMatrixMethodResult").append('<br><br>')
+                $("#inverseMatrixMethodResult").append(unitVector)
+            } else {
+                var errorMessage = $('<p style="color: red">')
+                errorMessage.append("FAIL!\n" + response.error.description)
+                $("#inverseMatrixMethodResult").append(errorMessage)
+            }
+        }
+
+        function brownRobinsonMethodProcessor(response) {
+            if (response.success) {
+                var brownRobinsonMatrixAlgorithm = response.result.brownRobinsonMatrixAlgorithm
+                var firstGamerStrategy = katex.renderToString("\\tilde{x}=("+response.result.firstGamerStrategy.join(",")+"),")
+                var secondGamerStrategy = katex.renderToString("\\tilde{y}=("+response.result.secondGamerStrategy.join(",")+"),")
+                var gameCost = katex.renderToString(response.result.gameCost[0]+"\\le v \\le"+response.result.gameCost[1]+",")
+                var gameCostAverage = katex.renderToString("v_{ср}="+response.result.gameCostAverage+",")
+                var epsilon = katex.renderToString("\\varepsilon="+response.result.epsilon+".")
+                var firstGamerStrategyChoiceIndex = 0
+                var firstGamerStrategyChoices = response.result.firstGamerStrategy.map(function () {
+                    var choice = "x" + (firstGamerStrategyChoiceIndex + 1)
+                    firstGamerStrategyChoiceIndex += 1
+                    return '<th>'+choice+'</th>'
+                })
+                var secondGamerStrategyChoiceIndex = 0
+                var secondGamerStrategyChoices = response.result.secondGamerStrategy.map(function () {
+                    var choice = "y" + (secondGamerStrategyChoiceIndex + 1)
+                    secondGamerStrategyChoiceIndex += 1
+                    return '<th>'+choice+'</th>'
+                })
+                var table = $('<table class="table-bordered">')
+                var thead = $('<thead>' +
+                                '<tr>' +
+                                    '<th rowspan="2">k</th>' +
+                                    '<th colspan="2">Выбор игрока</th>' +
+                                    '<th colspan="'+firstGamerStrategyChoiceIndex+'">Выигрыш игрока A</th>' +
+                                    '<th colspan="'+secondGamerStrategyChoiceIndex+'">Проигрыш игрока B</th>' +
+                                    '<th rowspan="2">'+katex.renderToString("{1 \\over k}\\overline{v}[k]")+'</th>' +
+                                    '<th rowspan="2">'+katex.renderToString("{1 \\over k}\\underline{v}[k]")+'</th>' +
+                                    '<th rowspan="2">'+katex.renderToString("\\varepsilon")+'</th>' +
+                                '</tr>' +
+                                '<tr>' +
+                                    '<th>A</th>' +
+                                    '<th>B</th>' +
+                                    firstGamerStrategyChoices.join("") +
+                                    secondGamerStrategyChoices.join("") +
+                                '</tr>' +
+                            '</thead>')
+                var tbody = $('<tbody>' +
+                              brownRobinsonMatrixAlgorithm.map(function(row) {
+                                return '<tr>' +
+                                       '<td>' + row.iterationNumber + '</td>' +
+                                       '<td>x' + row.firstOptimalStrategy + '</td>' +
+                                       '<td>y' + row.secondOptimalStrategy + '</td>' +
+                                       row.firstGamerWins.map(function(win) { return '<td>' + win + '</td>' }).join("") +
+                                       row.secondGamerLosses.map(function(loss) { return '<td>' + loss + '</td>' }).join("") +
+                                       '<td>' + row.gameCostAverageUp + '</td>' +
+                                       '<td>' + row.gameCostAverageLoss + '</td>' +
+                                       '<td>' + row.epsilon + '</td>' +
+                                       '</tr>'
+                              }).join("") +
+                              '</tbody>')
+                table.append(thead)
+                table.append(tbody)
+
+                var exportTableButton = $('<button>' +
+                                          ' <span class="glyphicon glyphicon-download"></span>' +
+                                          ' Экспортировать таблицу' +
+                                          '</button>')
+
+                exportTableButton.on("click", function () {
+                    exportTableToCSV(table)
+                })
+
+                var graphic = $('<div id="graphic" style="width: 50rem; height: 50rem">')
+                var chart = anychart.line(
+                    brownRobinsonMatrixAlgorithm.map(function(row) {
+                        return {
+                            x: row.iterationNumber,
+                            value: row.epsilon
+                        }
+                    })
+                )
+                chart.title("Зависимость погрешности от номера партии")
+                chart.xAxis().title("Номер партии")
+                chart.yAxis().title("Погрешность")
+                chart.xGrid(true)
+                chart.yGrid(true)
+                chart.container(graphic.get(0)).draw()
+
+                var graphic2 = $('<div id="graphic2" style="width: 50rem; height: 50rem">')
+                var chart2 = anychart.line(
+                    brownRobinsonMatrixAlgorithm.map(function(row) {
+                        return {
+                            x: row.iterationNumber,
+                            value: row.gameCostAverageUp
+                        }
+                    })
+                )
+                chart2.title("Зависимость верхней цены игры от номера партии")
+                chart2.xAxis().title("Номер партии")
+                chart2.yAxis().title("Верхняя цена игры")
+                chart2.xGrid(true)
+                chart2.yGrid(true)
+                chart2.container(graphic2.get(0)).draw()
+
+                var graphic3 = $('<div id="graphic3" style="width: 50rem; height: 50rem">')
+                var chart3 = anychart.line(
+                    brownRobinsonMatrixAlgorithm.map(function(row) {
+                        return {
+                            x: row.iterationNumber,
+                            value: row.gameCostAverageLoss
+                        }
+                    })
+                )
+                chart3.title("Зависимость нижней цены игры от номера партии")
+                chart3.xAxis().title("Номер партии")
+                chart3.yAxis().title("Нижняя цена игры")
+                chart3.xGrid(true)
+                chart3.yGrid(true)
+                chart3.container(graphic3.get(0)).draw()
+
+                $("#brownRobinsonMethodResult").append(table)
+                $("#brownRobinsonMethodResult").append('<br>')
+                $("#brownRobinsonMethodResult").append(exportTableButton)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(firstGamerStrategy)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(secondGamerStrategy)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(gameCost)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(gameCostAverage)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(epsilon)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(graphic)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(graphic2)
+                $("#brownRobinsonMethodResult").append('<br><br>')
+                $("#brownRobinsonMethodResult").append(graphic3)
+                $('.anychart-credits').remove()
+            } else {
+                var errorMessage = $('<p style="color: red">')
+                errorMessage.append("FAIL!\n" + response.error.description)
+                $("#brownRobinsonMethodResult").append(errorMessage)
+            }
+        }
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне лабораторной работы №2
+        // ---------------------------------------------------------------------------------------------------------
+
+        $("#lab2Execute").on("click", function() {
+            $("#analyticalConvexConcaveGamesMethodResult").html("")
+            $('#numericalConvexConcaveGamesMethodResult').html("")
+            sendRequest('post', '/game_theory/api/lab2/analytical_method', JSON.stringify(coefficientsAndDegrees), function(response) {
+                analyticalConvexConcaveGamesMethodProcessor(response)
+            })
+            sendRequest('post', '/game_theory/api/lab2/numerical_method', JSON.stringify(coefficientsAndDegrees), function(response) {
+                numericalConvexConcaveGamesMethodProcessor(response)
+            })
+        })
+
+        function analyticalConvexConcaveGamesMethodProcessor(response) {
+            if (response.success) {
+                var solutionX = katex.renderToString("x^*=-{{cy + d} \\over 2a} = "+response.result.solutionX+",")
+                var solutionY = katex.renderToString("y^*=-{{cx + e} \\over 2b} = "+response.result.solutionY+",")
+                var saddlePoint = katex.renderToString("h=H(x^*,y^*)= "+response.result.saddlePoint+".")
+                $("#analyticalConvexConcaveGamesMethodResult").append(solutionX)
+                $("#analyticalConvexConcaveGamesMethodResult").append('<br><br>')
+                $("#analyticalConvexConcaveGamesMethodResult").append(solutionY)
+                $("#analyticalConvexConcaveGamesMethodResult").append('<br><br>')
+                $("#analyticalConvexConcaveGamesMethodResult").append(saddlePoint)
+            } else {
+                var errorMessage = $('<p style="color: red">')
+                errorMessage.append("FAIL!\n" + response.error.description)
+                $("#analyticalConvexConcaveGamesMethodResult").append(errorMessage)
+            }
+        }
+
+        function numericalConvexConcaveGamesMethodProcessor(response) {
+            if (response.success) {
+                $("#numericalConvexConcaveGamesMethodResult").append(
+                    response.result.slice(0, 10).map(function (result) {
+                        var table = '<table class="table-bordered">' +
+                                    result.approximation.map(function (row) {
+                                        return '<tr>' +
+                                                row.map(function (element) {
+                                                    return '<td>' +
+                                                            element +
+                                                            '</td>'
+                                                }).join("") +
+                                                '</tr>'
+                                    }).join("") +
+                                    '</table>'
+                        return '<p>' +
+                                katex.renderToString("N=" + result.partitionParameter) +
+                                '<br>' +
+                                table +
+                                '<br>' +
+                                result.comment +
+                                '<br>' +
+                                katex.renderToString("x=" + result.solutionX + ", ") + " " +
+                                katex.renderToString("y=" + result.solutionY + ", ") + " " +
+                                katex.renderToString("H=" + result.gameCost + ".") +
+                                '<hr>' +
+                                '</p>'
+                    }).join(""))
+
+                $("#numericalConvexConcaveGamesMethodResult").append('<b>Численно найдено решение задачи:</b>')
+                $("#numericalConvexConcaveGamesMethodResult").append('<br>')
+                var lastResult = response.result[response.result.length - 1]
+                $("#numericalConvexConcaveGamesMethodResult").append(
+                    '<p>' +
+                    katex.renderToString("N=" + lastResult.partitionParameter) +
+                    '<br>' +
+                    katex.renderToString("x=" + lastResult.solutionX + ",") + " " +
+                    katex.renderToString("y=" + lastResult.solutionY + ", ") + " " +
+                    katex.renderToString("H=" + lastResult.gameCost + ".") +
+                    '<hr>' +
+                    '</p>'
+                )
+            } else {
+                var errorMessage = $('<p style="color: red">')
+                errorMessage.append("FAIL!\n" + response.error.description)
+                $("#numericalConvexConcaveGamesMethodResult").append(errorMessage)
+            }
+        }
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне лабораторной работы №3
+        // ---------------------------------------------------------------------------------------------------------
+
+        var generatedMatrices = []
+
+        $("#lab3Generate").on("click", function() {
+            var lab3TableBodyResult = $("#lab3MatrixStrategyBody")
+            lab3TableBodyResult.html("")
+            sendRequest(
+                'post', '/game_theory/api/lab3/gen_matrix',
+                JSON.stringify({
+                    "matrixRowsCount": matrixStrategyRowsCount["lab3MatrixStrategyBody"],
+                    "matrixColumnsCount": matrixStrategyColumnsCount["lab3MatrixStrategyBody"]
+                }), function(response) {
+                    if (response.success) {
+                        response.result.biMatrix.forEach(function (row) {
+                            var tr = $('<tr>')
+                            row.forEach(function (elements) {
+                                var result = elements["first"]+" \\ "+elements["second"]
+                                var td = $('<td><input type="text" value="'+result+'"/></td>')
+                                tr.append(td)
+                            })
+                            lab3TableBodyResult.append(tr)
+                        })
+                        generatedMatrices = []
+                        generatedMatrices.push(response.result.firstMatrix)
+                        generatedMatrices.push(response.result.secondMatrix)
+                    } else {
+                        var errorMessage = $('<p style="color: red">')
+                        errorMessage.append("FAIL!\n" + response.error.description)
+                        lab3TableBodyResult.append(errorMessage)
+                    }
+            })
+        })
+
+        $("#lab3ExecuteGeneratedMatrix").on("click", function () {
+            nashPoretoProcessor(generatedMatrices, $("#generatedBiMatrixNashPoretoResult"), $("#lab3MatrixStrategyBody"), false)
+        })
+
+        $("#lab3checkNashPoreto").on("click", function () {
+            var crossRoadMatrix = [[[1,1-0.01],[2,0]], [[1,2],[1-0.01,0]]]
+            nashPoretoProcessor(crossRoadMatrix, $("#checkNashPoretoGameCrossroadResult"), $("#gameCrossroadBody"), false)
+            var familyMatrix = [[[4,0],[0,1]], [[1,0],[0,4]]]
+            nashPoretoProcessor(familyMatrix, $("#checkNashPoretoGameFamilyResult"), $("#gameFamilyBody"), false)
+            var prisonerMatrix = [[[-5,0],[-10,-1]], [[-5,-10],[0,-1]]]
+            nashPoretoProcessor(prisonerMatrix, $("#checkNashPoretoGamePrisonerResult"), $("#gamePrisonerBody"), false)
+        })
+
+        $("#lab3Execute").on("click", function () {
+            var table = $("#lab3BiMatrixStrategyBody")
+            var matrixStrategy = []
+            table.children('tr').each(function () {
+                var matrixStrategyRow = []
+                $(this).children('td').each(function (index, td) { matrixStrategyRow.push(td.firstChild.value) })
+                matrixStrategy.push(matrixStrategyRow)
+            })
+            var firstMatrix = []
+            var secondMatrix = []
+            matrixStrategy.forEach(function (row) {
+                var firstMatrixRow = []
+                var secondMatrixRow = []
+                row.forEach(function (element) {
+                    var elements = element.split("\\")
+                    firstMatrixRow.push(elements[0].trim())
+                    secondMatrixRow.push(elements[1].trim())
+                })
+                firstMatrix.push(firstMatrixRow)
+                secondMatrix.push(secondMatrixRow)
+            })
+            var matrices = [firstMatrix, secondMatrix]
+            nashPoretoProcessor(matrices, $("#nashPoretoResult"), table, true)
+        })
+
+        function nashPoretoProcessor(matrices, resultField, table, mixedRequired) {
+            sendRequest(
+                'post', '/game_theory/api/lab3/nash_pareto',
+                JSON.stringify(matrices), function(response) {
+                    if (response.success) {
+                        resultField.html("")
+
+                        var nashClearResult = response.result.nashEquilibriumInClearStrategies
+                        var optimalParetoResult = response.result.optimalPareto
+
+                        if (nonEmpty(nashClearResult)) {
+                            nashClearResult.forEach(function (nash) {
+                                var tr = table.children('tr')[nash.rowIndex]
+                                var td = $(tr).children('td')[nash.columnIndex]
+                                td.style.color = "#5cb85c"
+                            })
+                        }
+
+                        optimalParetoResult.forEach(function (pareto) {
+                            var tr = table.children('tr')[pareto.rowIndex]
+                            var td = $(tr).children('td')[pareto.columnIndex]
+                            td.style.border = "3px solid #bd4147"
+                        })
+
+                        resultField.append('<br><b><p>Стратегии первого игрока записаны по строкам, второго - по столбцам.' +
+                            'Ситуации, равновесные по Нэшу, выделены зеленым цветом. Ситуации, оптимальные по Парето,' +
+                            ' обведены красной рамкой. Ситуации, и равновесные по Нэшу, и оптимальные по Парето, ' +
+                            'соответственно выделены зеленым и обведены красной рамкой</p></b><br>')
+
+                        var nashValues = ""
+                        if (nonEmpty(nashClearResult)) {
+                            var index = 1
+                            nashValues = nashClearResult.map(function (nash) {
+                                if (index % 2 === 1) {
+                                    index += 1
+                                    return "(" + nash.value + ";"
+                                } else {
+                                    index += 1
+                                    return " " + nash.value + ")"
+                                }
+                            }).join(" ")
+                        }
+                        resultField.append('<i><p>Равновесие Нэша: '+nashValues+'</p><i>')
+
+                        var paretoValues = optimalParetoResult.map(function (pareto) {
+                            return "(" + pareto.value.join("; ") + ")"
+                        }).join(" ")
+                        resultField.append('<br><i><p>Оптимальность по Парето: '+paretoValues+'</p><i><br>')
+
+                        if (mixedRequired) {
+                            var nashMixedResult = response.result.nashEquilibriumInMixedStrategies
+                            if (nonEmpty(nashMixedResult)) {
+                                var nashMixedX = "x = (" + nashMixedResult[0].gamerStrategy.join(";") + ")"
+                                var nashMixedY = "y = (" + nashMixedResult[1].gamerStrategy.join(";") + ")"
+                                var firstCost = "v1 = " + nashMixedResult[0].gameCost
+                                var secondCost = "v2 = " + nashMixedResult[1].gameCost
+                                resultField.append('<i><p>Равновесие Нэша в смешанных стратегиях: '+nashMixedX+', '+nashMixedY+'</p><i>')
+                                resultField.append('<i><p>Равновесные выигрыши: '+firstCost+', '+secondCost+'</p><i>')
+                            }
+                        }
+                    } else {
+                        var errorMessage = $('<p style="color: red">')
+                        errorMessage.append("FAIL!\n" + response.error.description)
+                        lab3TableBodyResult.append(errorMessage)
+                    }
+                })
+        }
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне лабораторной работы №4
+        // ---------------------------------------------------------------------------------------------------------
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне лабораторной работы №5
+        // ---------------------------------------------------------------------------------------------------------
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне лабораторной работы №6
+        // ---------------------------------------------------------------------------------------------------------
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне рубежного контроля №1
+        // ---------------------------------------------------------------------------------------------------------
+
+        $("#rk1Execute").on("click", function () {
+            $("#rk1Result").html("")
+            var matrixStrategy = []
+            $("#rk1MatrixStrategyBody tr").each(function () {
+                var matrixStrategyRow = []
+                $(this).children('td').each(function (index, td) { matrixStrategyRow.push(td.firstChild.value) })
+                matrixStrategy.push(matrixStrategyRow)
+            })
+            sendRequest('post', '/game_theory/api/rk1/monotone_iteration_method', JSON.stringify(matrixStrategy), function(response) {
+                rk1Processor(response)
+            })
+        })
+
+        function rk1Processor(response) {
+            if (response.success) {
+                var solutionX = katex.renderToString("x^*=("+response.result.strategiesX.join(",")+"),")
+                var solutionY = katex.renderToString("y^*=("+response.result.strategiesY.join(",")+"),")
+                var gameCost = katex.renderToString("v="+response.result.gameCost+".")
+                $("#rk1Result").append(solutionX)
+                $("#rk1Result").append('<br><br>')
+                $("#rk1Result").append(solutionY)
+                $("#rk1Result").append('<br><br>')
+                $("#rk1Result").append(gameCost)
+            } else {
+                var errorMessage = $('<p style="color: red">')
+                errorMessage.append("FAIL!\n" + response.error.description)
+                $("#rk1Result").append(errorMessage)
+            }
+        }
+
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне рубежного контроля №2
+        // ---------------------------------------------------------------------------------------------------------
+
+        var secondGamerPoints = []
+        var epsilon
+
+        $('#rk2Execute').on("click", function () {
+            var req = {
+                "pointsCount": $("#pointsCount").val(),
+                "cubeDimensions": $("#cubeDimensions").val(),
+                "epsilon": $("#epsilon").val()
+            }
+            sendRequest('post', '/game_theory/api/rk2/search_game', JSON.stringify(req), function (response) {
+                if (response.success) {
+                    epsilon = response.result.epsilon
+                    var firstGamerPoints = response.result.firstGamerPoints
+                    secondGamerPoints = response.result.secondGamerPoints
+                    var cubeDimensions = response.result.cubeDimensions
+                    threeInit()
+                    drawCubeWithSpheres(firstGamerPoints, cubeDimensions, epsilon)
+                    $("#rk2Result").html("")
+                    $("#rk2Result").append('<hr><h1>Цена игры после ' + response.result.gamesCount + ' игр : ' +
+                        response.result.gameCost + '</h1>' + '<p>Голубые точки - точки первого игрока</p>' +
+                        '<p>Красные точки - точки второго игрока</p>')
+                } else {
+                    var errorMessage = $('<p style="color: red">')
+                    errorMessage.append("FAIL!\n" + response.error.description)
+                    $("#rk2Result").append(errorMessage)
+                }
+            })
+        })
+
+        $("#rk2generateGame").on("click", function () {
+            animateGame(secondGamerPoints, epsilon)
+        })
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Вспомогательные обработчики
+        // ---------------------------------------------------------------------------------------------------------
+
+        $(".matrixRowsCount").on("change", function () {
+            matrixStrategyRowsCount[$(this).attr("tableBodyId")] = parseInt(this.value)
+            initMatrixStrategy($(this).attr("tableBodyId"))
+        })
+
+        $(".matrixColumnsCount").on("change", function () {
+            matrixStrategyColumnsCount[$(this).attr("tableBodyId")] = parseInt(this.value)
+            initMatrixStrategy($(this).attr("tableBodyId"))
+        })
+
+        $(".lab2Coefficients").on("change", function () {
+            var coefficient = this.value
+            var degrees = $(this).attr("degrees").split(",")
+            coefficientsAndDegrees.push({
+                "coefficient": coefficient,
+                "variablesDegrees": degrees
+            })
+        })
+
+        // ---------------------------------------------------------------------------------------------------------
+        // Вспомогательные функции
+        // ---------------------------------------------------------------------------------------------------------
+
+        function exportTableToCSV(table) {
+            var rows = []
+            table.find('tr').each(function () {
+                var row = []
+                $(this).find('td').each(function () {
+                    row.push($(this).text())
+                })
+                rows.push(row)
+            })
+            csvContent = "data:text/csv;charset=utf-8,"
+            rows.forEach(function (rowArray) {
+                row = rowArray.join(",")
+                csvContent += row + "\r\n"
+            })
+            var encodedUri = encodeURI(csvContent)
+            var link = document.createElement("a")
+            link.setAttribute("href", encodedUri)
+            link.setAttribute("download", "table.csv")
+            document.body.appendChild(link)
+            link.click()
+        }
+
+        // Действия, которые необходимо выполнить при открытии страницы
+        function init() {
+            setMatrixDimensionOptions()
+        }
+
+        // Устанавливает возможные параметры размеров матрицы стратегий
+        function setMatrixDimensionOptions() {
+            for (var index = 0; index < 11; index++) {
+                $(".matrixRowsCount").append("<option value='" + index + "'>" + index + "</option>")
+                $(".matrixColumnsCount").append("<option value='" + index + "'>" + index + "</option>")
+            }
+        }
+
+        // Инициализирует данные для матрицы стратегий и саму матрицу
+        function initMatrixData() {
+            $(".matrixRowsCount").val("0")
+            $(".matrixColumnsCount").val("0")
+        }
+
+        // Инициализирует строки и столбцы матрицы стратегий
+        function initMatrixStrategy(matrixId) {
+            var matrixStrategyBody = $('#'+matrixId)
+            matrixStrategyBody.html("")
+            for (var rowIndex = 0; rowIndex < matrixStrategyRowsCount[matrixId]; rowIndex++) {
+                var tr = $('<tr>')
+                for (var columnIndex = 0; columnIndex < matrixStrategyColumnsCount[matrixId]; columnIndex++) {
+                    var td = $('<td><input type="text" value="0"/></td>')
+                    tr.append(td)
+                }
+                matrixStrategyBody.append(tr)
+            }
+        }
+
+        var scene, camera, controls, renderer
+        function threeInit() {
+            let canvas = document.getElementById('canvas')
+
+            canvas.width = window.innerWidth / 2.2
+            canvas.height = window.innerHeight / 2.2
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true
+            })
+            renderer.shadowMap.enabled = true
+
+            scene = new THREE.Scene()
+            camera = new THREE.PerspectiveCamera(69, (window.innerWidth / 2.2) / (window.innerHeight / 2.2), 0.1, 5000)
+            camera.position.set(69, 69, 69).setLength(100)
+            camera.lookAt(scene.position)
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement)
+        }
+
+        function animateGame(points, epsilon) {
+            let sphereMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff0000
+            })
+            let sphereGeometry = new THREE.SphereGeometry(epsilon, 100, 100)
+            points.forEach(function (point) {
+                let sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+                sphere.receiveShadow = true
+                scene.add(sphere)
+                sphere.position.x = point.x
+                sphere.position.y = point.y
+                sphere.position.z = point.z
+            })
+        }
+
+        function drawCubeWithSpheres(points, cubeDimensions, epsilon) {
+            let sphereMaterial = new THREE.MeshNormalMaterial({ color: 0x7fffb7 })
+            let sphereGeometry = new THREE.SphereGeometry(epsilon, 100, 100)
+            points.forEach(function (point) {
+                let sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+                sphere.receiveShadow = true
+                scene.add(sphere)
+                sphere.position.x = point.x
+                sphere.position.y = point.y
+                sphere.position.z = point.z
+            })
+
+            let cubeMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                wireframe: true
+            })
+            let cubeGeometry = new THREE.BoxGeometry(cubeDimensions, cubeDimensions, cubeDimensions)
+            let cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
+            cube.receiveShadow = true
+            cube.position.x = cubeDimensions / 2
+            cube.position.y = cubeDimensions / 2
+            cube.position.z = cubeDimensions / 2
+            scene.add(cube)
+
+            animate()
+        }
+
+        function animate() {
+            requestAnimationFrame(animate)
+            controls.update()
+            renderer.render(scene, camera)
+        }
+
+        // Отправка http запроса.
+        // Успех - выполнение функции responseProcessor
+        // Ошибка - отображение ошибки
+        function sendRequest(type, url, data = null, responseProcessor) {
+            $.ajax({
+                data: data,
+                type: type,
+                url: url,
+                contentType: false,
+                processData: false,
+                async: false,
+                success: function (response) {
+                    responseProcessor(response)
+                }
+            }).catch(err => alert("FAIL!\n" + err.responseText))
+        }
+
+        // Проверка, что объект пустой
+        function isEmpty(obj) {
+            for (var key in obj) {
+                if (obj.hasOwnProperty(key))
+                    return false
+            }
+            return true
+        }
+
+        // Проверка, что объект не пустой
+        function nonEmpty(obj) {
+            return !isEmpty(obj)
+        }
+    })
+</script>
+</html>
