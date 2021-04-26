@@ -1,8 +1,5 @@
 package game_theory
 
-import org.apache.bcel.generic.BranchHandle
-
-import scala.collection.mutable.RedBlackTree.Tree
 
 object Utils {
     def roundWithScale(decimal: Double, scale: Int): Double =
@@ -130,23 +127,3 @@ object TestSphere2Cube {
 
 }
 
-//object TestPositionGames {
-//    def main(args: Array[String]): Unit = {
-//        val treeDepth = scala.io.StdIn.readInt()
-//        val gamersCount = scala.io.StdIn.readInt()
-//        val strategiesCount = (0 until gamersCount).toList.map { _ =>
-//            scala.io.StdIn.readInt()
-//        }
-//        generateTree(treeDepth, gamersCount, strategiesCount)
-//    }
-//
-//    def generateTree(treeDepth: Int, gamersCount: Int, strategiesCount: List[Int]) = {
-//        val (winMin, winMax) = (-10.0, 20.0)
-//        val stopDepthMin = treeDepth / 2 + 1
-//        Tree.empty[String, MSA]
-//        val root = (0 until treeDepth).foldLeft((, )) { levelIndex =>
-//
-//        }
-//    }
-//
-//}
