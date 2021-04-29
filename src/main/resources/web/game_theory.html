@@ -22,14 +22,14 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js" integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous"></script>
     <!-- To automatically render math in text elements, include the auto-render extension: -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js" integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
-<!--    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>-->
-<!--    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>-->
 
     <!--Graphics support-->
     <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-base.min.js"></script>
 
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.10.0/d3.min.js"></script>
 
     <link rel="stylesheet" href="/css/bootstrap-grid.css">
 
@@ -80,6 +80,20 @@
 
         .modal-body{
             overflow-y: auto;
+        }
+
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 3px;
+        }
+
+        .node text { font: 12px sans-serif; }
+
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 3px;
         }
 
         @font-face {
@@ -313,6 +327,51 @@
             </div>
         </div>
     </div>
+    <!--Lab4 modal dialog-->
+    <div class="modal fade" id="lab4ReverseInductionMethodDialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Лабораторная работа №4: "Позиционные игры. Метод обратной индукции"</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Цель работы</h3>
+                    <p>
+
+                    </p>
+                    <hr>
+                    <h3>Постановка задачи</h3>
+                    <p>
+
+                    </p>
+                    <hr>
+                    <h3>Ход работы</h3>
+                    <label>
+                        Глубина дерева :
+                        <input id="treeDepth" type="text" class="form-control">
+                        Количество игроков :
+                        <input id="gamersCount" type="text" class="form-control">
+                        <br>
+                        Количество стратегий :
+                        <input id="strategiesCount" type="text" class="form-control">
+                        Диапазон выигрышей :
+                        <br>
+                        Min : <input id="winMin" type="text" class="form-control">
+                        Max : <input id="winMax" type="text" class="form-control">
+                        <br>
+                        <button id="lab4Execute" type="button" class="btn btn-primary">Сгенерировать</button>
+                        <button id="lab4Compute" type="button" class="btn btn-primary">Решить</button>
+                    </label>
+                    <br>
+                    <div id="positionGamesResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!--RK1 modal dialog-->
     <div class="modal fade" id="rk1Dialog" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-xlg" style="width: 50%">
@@ -424,7 +483,6 @@
         })
 
         $("#lab4ReverseInductionMethodBtn").on("click", function () {
-            initMatrixData()
             $('#lab4ReverseInductionMethodDialog').modal('show')
         })
 
@@ -878,6 +936,38 @@
         // Обработка кнопок в модальном окне лабораторной работы №4
         // ---------------------------------------------------------------------------------------------------------
 
+        $("#lab4Execute").on("click", function () {
+            sendRequest('post', '/game_theory/api/lab4/generate_tree', JSON.stringify({
+                "treeDepth": $("#treeDepth").val(),
+                "gamersCount": $("#gamersCount").val(),
+                "strategiesCount": $("#strategiesCount").val(),
+                "winMin": $("#winMin").val(),
+                "winMax": $("#winMax").val()
+            }), function(response) {
+                    if (response.success) {
+                        $("#positionGamesResult").html("")
+                        drawTree(response.result, "#positionGamesResult")
+                    } else {
+                        var errorMessage = $('<p style="color: red">')
+                        errorMessage.append("FAIL!\n" + response.error.description)
+                        $("#positionGamesResult").append(errorMessage)
+                    }
+                })
+        })
+
+        $("#lab4Compute").on("click", function () {
+            sendRequest('post', '/game_theory/api/lab4/compute_game', JSON.stringify({"gamersCount": $("#gamersCount").val()}), function(response) {
+                if (response.success) {
+                    $("#positionGamesResult").html("")
+                    drawTree(response.result, "#positionGamesResult")
+                } else {
+                    var errorMessage = $('<p style="color: red">')
+                    errorMessage.append("FAIL!\n" + response.error.description)
+                    $("#positionGamesResult").append(errorMessage)
+                }
+            })
+        })
+
         // ---------------------------------------------------------------------------------------------------------
         // Обработка кнопок в модальном окне лабораторной работы №5
         // ---------------------------------------------------------------------------------------------------------
@@ -1107,6 +1197,80 @@
             requestAnimationFrame(animate)
             controls.update()
             renderer.render(scene, camera)
+        }
+
+        function drawTree(nodes, treeContainer) {
+
+            var margin = {top: 40, right: 120, bottom: 20, left: 120}
+
+            var root = d3.stratify()
+                .id(function(d) { return d.id })
+                .parentId(function(d) { return d.parent })(nodes)
+
+            var width = 2000
+            var height = 2000
+
+            var svg = d3.select(treeContainer).append("svg").attr("width", width).attr("height", height)
+            var g = svg.append("g").attr('transform','translate('+ margin.left +','+ margin.right +')')
+
+            var tree = d3.tree().size([1800,1800])
+
+            var link = g.selectAll(".link")
+                .data(tree(root).links()).enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkHorizontal().x(function(d) { return d.x; }).y(function(d) { return d.y; }))
+                .style("stroke", function(d) {
+                    if (d.source.data.best && d.target.data.best) return d.target.data.color
+                })
+
+            var node = g.selectAll(".node")
+                .data(root.descendants())
+                .enter().append("g")
+                .attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf") })
+                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")" })
+
+            node.append("circle").attr("r", 25)
+                .style("fill", function (d) {
+                    return "#fff"
+                })
+
+            var nodeNumber = 0
+            node.append("text")
+                .text(function(d) {
+                    nodeNumber = nodeNumber + 1
+                    return nodeNumber
+                })
+                .attr("y", function(d) { return 0 })
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .style("fill-opacity", 1)
+                .style("font-size", "20px")
+
+            node.append("text")
+                .text(function(d) {
+                    return d.data.gamer
+                })
+                .attr("x", function(d) { return 40 })
+                .attr("dx", ".35em")
+                .attr("text-anchor", "middle")
+                .style("fill-opacity", 1)
+                .style("font-size", "20px")
+
+
+            node.append("text")
+                .text(function(d) {
+                    var data = ""
+                    if (nonEmpty(d.data.wins)) data = d.data.wins.map(function (win) {
+                        return "("+win.join(",")+")"
+                    }).join("\n")
+                    return data
+                })
+                .attr("y", function(d) { return 40 })
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .style("fill-opacity", 1)
+                .style("font-size", "20px")
         }
 
         // Отправка http запроса.

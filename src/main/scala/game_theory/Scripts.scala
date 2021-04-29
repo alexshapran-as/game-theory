@@ -1,10 +1,6 @@
 package game_theory
 
-
-object Utils {
-    def roundWithScale(decimal: Double, scale: Int): Double =
-        BigDecimal(decimal).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toDouble
-}
+import game_theory.utils.{TreeNode, Utils}
 
 case class Point(x: Double, y: Double, z: Double) {
     def toMap = Map("x" -> x, "y" -> y, "z" -> z)
@@ -126,4 +122,3 @@ object TestSphere2Cube {
     }
 
 }
-

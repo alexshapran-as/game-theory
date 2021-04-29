@@ -39,6 +39,8 @@ object Utils {
         }.getOrElse(roundWithScale(expressionWithoutWhitespacesAndCommas.toDouble, scale = 2))
     }
 
+    def getId: String = java.util.UUID.randomUUID.toString
+
     // -----------------------------------------------------------------------------------------------------------------
     // Методы работы с файлами
     // -----------------------------------------------------------------------------------------------------------------
@@ -742,6 +744,156 @@ object Utils {
         )
     }
 
+        // -------------------------------------------------------------------------------------------------------------
+        // * Позиционные игры
+        // -------------------------------------------------------------------------------------------------------------
+
+    private var tree = Map.empty[String, TreeNode]
+
+    def setTree(newTree: Map[String, TreeNode]) = { tree = newTree }
+    def getTree = tree
+
+    private def generateTreeHandler(
+                                       root: TreeNode,
+                                       lastChildInBound: Boolean,
+                                       treeDepth: Int,
+                                       gamersCount: Int,
+                                       gamersStrategiesCount: Map[Int, Int],
+                                       winMin: Int,
+                                       winMax: Int,
+                                       treeLevel: Int = 0
+                                   ): Unit = {
+        if (treeLevel != treeDepth) {
+            val gamerIndex = treeLevel % gamersCount
+            val strategiesCount = gamersStrategiesCount(gamerIndex)
+
+            val leaf = treeLevel == (treeDepth - 2)
+            val additionalLeavesIndices = if (treeLevel > 0) {
+                val availableCountOfLeaves = if (lastChildInBound) strategiesCount - 1 else strategiesCount
+                (0 until availableCountOfLeaves).map(_ => scala.util.Random.nextInt(strategiesCount + 1)).toList
+            } else {
+                List()
+            }
+            val children = if (root.leaf) {
+                List()
+            } else {
+                (0 until strategiesCount).map { strategyIndex =>
+                    val wins = if (leaf || additionalLeavesIndices.contains(strategyIndex)) {
+                        (0 until gamersCount).map(_ => winMax - scala.util.Random.nextInt(winMax - winMin)).toList
+                    } else {
+                        List()
+                    }
+                    TreeNode(
+                        Utils.getId,
+                        List(),
+                        Some(root.id),
+                        if (wins.nonEmpty) List(wins) else List(),
+                        treeLevel + 1,
+                        if (additionalLeavesIndices.contains(strategyIndex)) true else leaf
+                    )
+                }.toList
+            }
+
+            val updatedRoot = root.copy(children = children.map(_.id))
+            tree = tree + (updatedRoot.id -> updatedRoot)
+            children.zipWithIndex.foreach { case (child, childIndex) =>
+                generateTreeHandler(
+                    child, childIndex == children.length - 1,
+                    treeDepth, gamersCount, gamersStrategiesCount,
+                    winMin, winMax, treeLevel + 1
+                )
+            }
+        }
+    }
+
+    def generateTree(treeDepth: Int, gamersCount: Int, strategiesCount: List[Int], winMin: Int, winMax: Int): Unit = {
+        tree = Map.empty[String, TreeNode]
+        generateTreeHandler(
+            TreeNode(Utils.getId, List(), None, List(), 0, leaf = false, root = true),
+            true,
+            treeDepth,
+            gamersCount,
+            strategiesCount.zipWithIndex.map { case (strategy, gamerIndex) => gamerIndex -> strategy }.toMap,
+            winMin,
+            winMax
+        )
+    }
+
+    private def unBestChildren(rootId: String): Unit = {
+        val root = tree.find(_._1 == rootId).getOrElse(throw new Exception(s"node with id=${rootId} not found"))._2
+        val unBestedChildren = root.children.map { childId =>
+            val child = tree.find(_._1 == childId).getOrElse(throw new Exception(s"node with id=${childId} not found"))._2
+            child.copy(best = false)
+        }
+        tree = tree ++ unBestedChildren.map(child => child.id -> child).toMap
+        unBestedChildren.foreach(child => unBestChildren(child.id))
+    }
+
+    def computePositionGame(root: TreeNode, gamersCount: Int): TreeNode = {
+        val childrenWithWins = root.children.map { childId =>
+            val child = tree.getOrElse(childId, throw new Exception(s"node with id=${childId} not found"))
+            if (child.wins.isEmpty) {
+                computePositionGame(child, gamersCount)
+            } else {
+                child
+            }
+        }
+        val childrenWithMaxWins = childrenWithWins.groupBy { child =>
+            val parentId = root.id
+            val parent = tree.getOrElse(parentId, throw new Exception(s"node with id=${parentId} not found"))
+            val gamerIndex = parent.level % gamersCount
+            child.wins.map(win => win(gamerIndex)).max
+        }.maxBy(_._1)._2
+        val updatedRoot =  if (!root.root) {
+            childrenWithWins.filter(child => !childrenWithMaxWins.contains(child)).foreach { child =>
+                tree = tree + (child.id -> child.copy(best = false))
+                unBestChildren(child.id)
+            }
+            root.copy(wins = childrenWithMaxWins.flatMap(_.wins))
+        } else {
+            childrenWithWins.foldLeft(root) { (newRoot, child) =>
+                val bestWins = child.wins.groupBy(win => win.head).maxBy(_._1)._2
+                val rootWithWins = newRoot.copy(wins = newRoot.wins ++ bestWins)
+                val badWins = child.wins.filter(win => !bestWins.contains(win))
+                val badChildren = child.children.flatMap { otherChildId =>
+                    val otherChild = tree.getOrElse(otherChildId, throw new Exception(s"node with id=${otherChildId} not found"))
+                    if (badWins.contains(otherChild.wins)) Some(otherChild) else None
+                }
+                badChildren.foreach { badChild =>
+                    val unBestedRoot = badChild.copy(best = false)
+                    tree = tree + (unBestedRoot.id -> unBestedRoot)
+                    unBestChildren(badChild.id)
+                }
+                tree = tree + (child.id -> child.copy(best = true))
+                rootWithWins
+            }.copy(best = true)
+        }
+        tree = tree + (updatedRoot.id -> updatedRoot)
+        tree = tree ++ childrenWithMaxWins.map( child => child.id -> child.copy(best = true)).toMap
+        updatedRoot
+    }
+
+    private val availableColors = List("#fa9292", "#4d7fa0", "#dbbf79", "#d179db", "#79dbbf")
+    private val availableGamers = Map(0 -> "A", 1 -> "B", 2 -> "C", 3 -> "D", 4 -> "E")
+
+    @tailrec
+    def setColorForTree(nodes: List[(TreeNode, String)], first: Boolean = true): Unit = {
+        if (nodes.nonEmpty) {
+            val parentsWithColor = nodes.zipWithIndex.flatMap { case ((node, color), colorIndex) =>
+                val newColor = if (first) availableColors(colorIndex) else color
+                val updatedNode = node.copy(color = newColor)
+                tree = tree + (updatedNode.id -> updatedNode)
+                tree.find(_._1 == node.parent.getOrElse("")).map(node => (node._2, newColor))
+            }
+            setColorForTree(parentsWithColor, false)
+        }
+    }
+
+    def setGamer(gamersCount: Int): Unit = {
+        tree = tree.map { case (id, node) =>
+            id -> node.copy(gamer = if (node.leaf) "" else availableGamers(node.level % gamersCount))
+        }
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Методы работы с таблицами

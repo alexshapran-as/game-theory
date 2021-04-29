@@ -19,6 +19,9 @@ object MainApi extends HttpRouteUtils {
                     pathPrefix("lab3") {
                         NashParetoGamesMethodsApi.getRoute
                     } ~
+                    pathPrefix("lab4") {
+                        PositionGames.getRoute
+                    } ~
                     pathPrefix("rk1") {
                         MonotoneIterationMethodApi.getRoute
                     } ~
@@ -27,8 +30,8 @@ object MainApi extends HttpRouteUtils {
                     }
                 }
             } ~
-            get("js" / Segment) { sourceName =>
-                getFromResource(s"web/js/$sourceName")
+            get("js" / Segments) { sourceNames =>
+                getFromResource(s"web/js/${sourceNames.mkString("/")}")
             } ~
             get("css" / Segment) { sourceName =>
                 getFromResource(s"web/css/$sourceName")
