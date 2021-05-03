@@ -1,6 +1,6 @@
 package game_theory.utils
 
-import game_theory.MSA
+import game_theory.{Coalition, MSA}
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.{DataFormatter, Row}
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
@@ -844,30 +844,11 @@ object Utils {
             val gamerIndex = parent.level % gamersCount
             child.wins.map(win => win(gamerIndex)).max
         }.maxBy(_._1)._2
-        val updatedRoot =  if (!root.root) {
-            childrenWithWins.filter(child => !childrenWithMaxWins.contains(child)).foreach { child =>
-                tree = tree + (child.id -> child.copy(best = false))
-                unBestChildren(child.id)
-            }
-            root.copy(wins = childrenWithMaxWins.flatMap(_.wins))
-        } else {
-            childrenWithWins.foldLeft(root) { (newRoot, child) =>
-                val bestWins = child.wins.groupBy(win => win.head).maxBy(_._1)._2
-                val rootWithWins = newRoot.copy(wins = newRoot.wins ++ bestWins)
-                val badWins = child.wins.filter(win => !bestWins.contains(win))
-                val badChildren = child.children.flatMap { otherChildId =>
-                    val otherChild = tree.getOrElse(otherChildId, throw new Exception(s"node with id=${otherChildId} not found"))
-                    if (badWins.contains(otherChild.wins)) Some(otherChild) else None
-                }
-                badChildren.foreach { badChild =>
-                    val unBestedRoot = badChild.copy(best = false)
-                    tree = tree + (unBestedRoot.id -> unBestedRoot)
-                    unBestChildren(badChild.id)
-                }
-                tree = tree + (child.id -> child.copy(best = true))
-                rootWithWins
-            }.copy(best = true)
+        childrenWithWins.filter(child => !childrenWithMaxWins.contains(child)).foreach { child =>
+            tree = tree + (child.id -> child.copy(best = false))
+            unBestChildren(child.id)
         }
+        val updatedRoot = root.copy(wins = childrenWithMaxWins.flatMap(_.wins), best = true)
         tree = tree + (updatedRoot.id -> updatedRoot)
         tree = tree ++ childrenWithMaxWins.map( child => child.id -> child.copy(best = true)).toMap
         updatedRoot
@@ -894,6 +875,97 @@ object Utils {
             id -> node.copy(gamer = if (node.leaf) "" else availableGamers(node.level % gamersCount))
         }
     }
+
+        // -------------------------------------------------------------------------------------------------------------
+        // * Позиционные игры
+        // -------------------------------------------------------------------------------------------------------------
+
+    private def factorial(number: Int): Int =
+        (2 to number).foldLeft(1) { case (gamerNumber, numberFactorial) => numberFactorial * gamerNumber }
+
+    def computeShapleyVector(gamersCount: Int, characteristicFunction: Map[Coalition, Double]): Map[Int, Double] = {
+        val factor = 1.0 / factorial(gamersCount)
+        (1 to gamersCount).foldLeft(Map.empty[Int, Double]) { case (shapleyVector, gamerId) =>
+            val characteristicFunctionForCoalitionsWithGamerId = characteristicFunction.filter(_._1.contains(gamerId))
+            val shapleyComponent = factor * characteristicFunctionForCoalitionsWithGamerId.map { characteristicFuncForCoalsWithGamerId =>
+                val coalitionSize = characteristicFuncForCoalsWithGamerId._1.length
+                val coalitionBenefit = characteristicFuncForCoalsWithGamerId._2
+                val coalitionBenefitWithoutGamerId = characteristicFunction(characteristicFuncForCoalsWithGamerId._1.filter(_ != gamerId))
+                factorial(coalitionSize - 1) * factorial(gamersCount - coalitionSize) * (coalitionBenefit - coalitionBenefitWithoutGamerId)
+            }.sum
+            shapleyVector + (gamerId -> shapleyComponent)
+        }
+    }
+
+    def isIndividualRationalizationConditionMet(
+                                                   shapleyVector: Map[Int, Double],
+                                                   characteristicFunction: Map[Coalition, Double]
+                                               ): (Boolean, List[Int]) = {
+        shapleyVector.foldLeft((true, List.empty[Int])) {
+            case ((individualRationalizationConditionIsTrue, badGamerIds), (gamerId, shapleyComponent)) =>
+                val newIndividualRationalizationConditionIsTrue = shapleyComponent >= characteristicFunction(List(gamerId))
+                (
+                    individualRationalizationConditionIsTrue && newIndividualRationalizationConditionIsTrue,
+                    if (newIndividualRationalizationConditionIsTrue) badGamerIds else badGamerIds :+ gamerId
+                )
+        }
+    }
+
+    private val groupRationalizationZeroEpsilon = 0.1
+
+    def isGroupRationalizationConditionMet(
+                                              gamersCount: Int,
+                                              shapleyVector: Map[Int, Double],
+                                              characteristicFunction: Map[Coalition, Double]
+                                          ): Boolean = {
+        val shapleyComponentsSum = shapleyVector.values.sum
+        val coalitionsAllBenefit = characteristicFunction.find(_._1.toSet == (1 to gamersCount).toSet).map(_._2).getOrElse(0.0)
+        shapleyComponentsSum - coalitionsAllBenefit <= groupRationalizationZeroEpsilon
+    }
+
+    private def checkCooperativeGameOn(
+                                          characteristicFunction: Map[Coalition, Double],
+                                          coalitionsPairsFilter: List[Coalition] => Boolean,
+                                          coalitionsPairsCheckFunction: List[Coalition] => (Boolean, List[Coalition], List[Coalition])
+                                      ): (Boolean, List[List[Coalition]], List[List[Coalition]]) = {
+        val coalitions = characteristicFunction.keys.toList.filter(_.nonEmpty)
+        val coalitionsPairs = coalitions.combinations(2).filter(coalitionsPairsFilter).toList
+        coalitionsPairs.foldLeft((true, List.empty[List[Coalition]], List.empty[List[Coalition]])) {
+            case ((checkResult, goodCoalitionsPairs, badCoalitionsPairs), coalitionPair) =>
+                val (newCheckResult, newGoodCoalitionsPairs, newBadCoalitionsPairs) = coalitionsPairsCheckFunction(coalitionPair)
+                (
+                    checkResult && newCheckResult,
+                    if (newGoodCoalitionsPairs.nonEmpty) goodCoalitionsPairs :+ newGoodCoalitionsPairs else goodCoalitionsPairs,
+                    if (newBadCoalitionsPairs.nonEmpty) badCoalitionsPairs :+ newBadCoalitionsPairs else badCoalitionsPairs
+                )
+        }
+    }
+
+    def isSuperadditive(characteristicFunction: Map[Coalition, Double]): (Boolean, List[List[Coalition]], List[List[Coalition]]) =
+        checkCooperativeGameOn(
+            characteristicFunction,
+            coalitionsPairsFilter = (coalitionPair: List[Coalition]) => coalitionPair(0).intersect(coalitionPair(1)).isEmpty,
+            coalitionsPairsCheckFunction = (coalitionPair: List[Coalition]) => {
+                val List(coalitionFirst, coalitionSecond) = coalitionPair
+                val superadditive = characteristicFunction
+                    .find(_._1.toSet == (coalitionFirst ++ coalitionSecond).toSet)
+                    .exists(_._2 >= characteristicFunction(coalitionFirst) + characteristicFunction(coalitionSecond))
+                (superadditive, if (superadditive) coalitionPair else List(), if (superadditive) List() else coalitionPair)
+            }
+        )
+
+    def isConvex(characteristicFunction: Map[Coalition, Double]): (Boolean, List[List[Coalition]], List[List[Coalition]]) =
+        checkCooperativeGameOn(
+            characteristicFunction,
+            coalitionsPairsFilter = _ => true,
+            coalitionsPairsCheckFunction = (coalitionPair: List[Coalition]) => {
+                val List(coalitionFirst, coalitionSecond) = coalitionPair
+                val unionBenefit = characteristicFunction.find(_._1.toSet == (coalitionFirst ++ coalitionSecond).toSet).map(_._2).getOrElse(0.0)
+                val intersectBenefit = characteristicFunction.find(_._1.toSet == coalitionFirst.intersect(coalitionSecond).toSet).map(_._2).getOrElse(0.0)
+                val convex = unionBenefit + intersectBenefit >= characteristicFunction(coalitionFirst) + characteristicFunction(coalitionSecond)
+                (convex, if (convex) coalitionPair else List(), if (convex) List() else coalitionPair)
+            }
+        )
 
     // -----------------------------------------------------------------------------------------------------------------
     // Методы работы с таблицами

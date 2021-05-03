@@ -372,6 +372,50 @@
             </div>
         </div>
     </div>
+    <!--Lab5 modal dialog-->
+    <div class="modal fade" id="lab5CooperativeGamesDialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Лабораторная работа №5: "Рациональный дележ в кооперативных играх"</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Цель работы</h3>
+                    <p>
+                        Изучить постановку кооперативной игры и найти оптимальное распределение выигрыша (дележ) между
+                        игроками путем вычисления компонент вектора Шепли.
+                    </p>
+                    <hr>
+                    <h3>Постановка задачи</h3>
+                    <p>
+                        Для заданной характеристической функции игры выполнить следующее:<br>
+                        1. Проверить кооперативную игру на супераддитивность и выпуклость. Если игра не супераддитивна,
+                        изменить характеристическую функцию таким образом, чтобы игра стала супераддитивной.<br>
+                        2. Составить программу вычисления компонент вектора Шепли и рассчитать его.<br>
+                        3. Проверить условия индивидуальной и групповой рационализации.
+                    </p>
+                    <hr>
+                    <h3>Ход работы</h3>
+                    <label>
+                        Количество игроков :
+                        <input id="cooperativeGamersCount" type="text" class="form-control">
+                        <button id="lab5Ok" type="button" class="btn btn-primary">OK</button>
+                        <br>
+                        Задайте характеристическую функцию :
+                        <div id="characteristicFunction"></div>
+                        <br>
+                        <button id="lab5Execute" type="button" class="btn btn-primary">Рассчитать</button>
+                    </label>
+                    <br>
+                    <div id="cooperativeGamesResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!--RK1 modal dialog-->
     <div class="modal fade" id="rk1Dialog" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-xlg" style="width: 50%">
@@ -487,7 +531,6 @@
         })
 
         $("#lab5CooperativeGamesBtn").on("click", function () {
-            initMatrixData()
             $('#lab5CooperativeGamesDialog').modal('show')
         })
 
@@ -971,6 +1014,155 @@
         // ---------------------------------------------------------------------------------------------------------
         // Обработка кнопок в модальном окне лабораторной работы №5
         // ---------------------------------------------------------------------------------------------------------
+
+        $("#lab5Ok").on("click", function () {
+            sendRequest('post', '/game_theory/api/lab5/generate_coalitions', JSON.stringify({"gamersCount": $("#cooperativeGamersCount").val()}), function(response) {
+                if (response.success) {
+                    var characteristicFunction = $("#characteristicFunction")
+                    characteristicFunction.html("")
+                    var coalitions = response.result.map(function (coalition) {
+                        if (isEmpty(coalition)) {
+                            return "v(∅)"
+                        } else {
+                            return "v({"+coalition.join(",")+"})"
+                        }
+                    })
+                    var defaultCharacteristicFunction = [0, 2, 3, 2, 4, 6, 5, 7, 6, 8, 8, 9, 11, 10, 12, 14]
+                    var i = 0
+                    coalitions.forEach(function (coalition) {
+                        characteristicFunction.append(coalition+": ")
+                        characteristicFunction.append($('<input class="coalitionCharacteristicFunction" coalition="'+coalition+'" value="'+defaultCharacteristicFunction[i]+'">'))
+                        characteristicFunction.append($('<br><br>'))
+                        i = i + 1
+                    })
+                } else {
+                    var errorMessage = $('<p style="color: red">')
+                    errorMessage.append("FAIL!\n" + response.error.description)
+                    $("#cooperativeGamesResult").append(errorMessage)
+                }
+            })
+        })
+
+        $("#lab5Execute").on("click", function () {
+            var characteristicFunction = {}
+            var coalitionCharacteristicFunction = $(".coalitionCharacteristicFunction")
+            for (var i = 0; i < coalitionCharacteristicFunction.length; ++i) {
+                var key = $(coalitionCharacteristicFunction[i]).attr("coalition")
+                var value = $(coalitionCharacteristicFunction[i]).val()
+                characteristicFunction[key] = value
+            }
+            var gamersCount = $("#cooperativeGamersCount").val()
+            var request = {
+                "gamersCount": gamersCount,
+                "characteristicFunction": characteristicFunction
+            }
+            sendRequest('post', '/game_theory/api/lab5/compute_game', JSON.stringify(request), function(response) {
+                var cooperativeGamesResult = $("#cooperativeGamesResult")
+                cooperativeGamesResult.html("")
+                if (response.success) {
+                    var superadditive = response.result.superadditive
+                    var superadditiveResult = $("<p>")
+                    var superadditiveResultPretext = " "
+                    var superadditiveResultCoalitions = superadditive.superadditiveCoalitions
+                    if (!superadditive.result) {
+                        superadditiveResultPretext = " НЕ "
+                        superadditiveResultCoalitions = superadditive.notSuperadditiveCoalitions
+                    }
+                    superadditiveResult.append("<br><b>Кооперативная игра"+superadditiveResultPretext+"является супераддитивной. Так как"+superadditiveResultPretext+"выполняется:<b><br><br>")
+                    superadditiveResult.append(katex.renderToString("\\forall S,T \\sube I (S \\cap T = \\varnothing): v(S \\cup T) \\ge v(S) + v(T)"))
+                    superadditiveResultCoalitions.forEach(function (coalitionPair) {
+                        var s = "\\{"+coalitionPair[0].join(",")+"\\}"
+                        var t = "\\{"+coalitionPair[1].join(",")+"\\}"
+                        var stUnion = "\\{"+coalitionPair[0].concat(coalitionPair[1]).sort().join(",")+"\\}"
+                        var vsPlusvt = Number(characteristicFunction["v("+s.replaceAll("\\", "")+")"]) + Number(characteristicFunction["v("+t.replaceAll("\\", "")+")"])
+                        superadditiveResult.append("<br>" + katex.renderToString(s+","+t+" \\sube I ("+s+" \\cap "+t+" = \\varnothing): v("+s+" \\cup "+t+")=v("+stUnion+")="+characteristicFunction["v("+stUnion.replaceAll("\\", "")+")"]+" \\ge v("+s+") + v("+t+")="+vsPlusvt))
+                    })
+
+                    var convex = response.result.convex
+                    var convexResult = $("<p>")
+                    var convexResultPretext = " "
+                    var convexResultCoalitions = convex.convexCoalitions
+                    if (!convexResult.result) {
+                        convexResultPretext = " НЕ "
+                        convexResultCoalitions = convex.notConvexCoalitions
+                    }
+                    convexResult.append("<br><b>Кооперативная игра"+convexResultPretext+"является выпуклой. Так как"+convexResultPretext+"выполняется:</b><br><br>")
+                    convexResult.append(katex.renderToString("\\forall S,T \\sube I: v(S \\cup T) + v(S \\cap T) \\ge v(S) + v(T)"))
+                    convexResultCoalitions.forEach(function (coalitionPair) {
+                        var s = "\\{"+coalitionPair[0].join(",")+"\\}"
+                        var t = "\\{"+coalitionPair[1].join(",")+"\\}"
+                        const unique = (value, index, self) => {
+                            return self.indexOf(value) === index
+                        }
+                        var stUnion = "\\{"+coalitionPair[0].concat(coalitionPair[1]).filter(unique).sort().join(",")+"\\}"
+                        var stIntersect = "\\{"+coalitionPair[0].filter(value => coalitionPair[1].includes(value)).sort().join(",")+"\\}"
+                        var stUnionPlusstIntersect = Number(characteristicFunction["v("+stUnion.replaceAll("\\", "")+")"]) + Number(characteristicFunction["v("+stIntersect.replaceAll("\\", "")+")"])
+                        var vsPlusvt = Number(characteristicFunction["v("+s.replaceAll("\\", "")+")"]) + Number(characteristicFunction["v("+t.replaceAll("\\", "")+")"])
+                        convexResult.append("<br>" + katex.renderToString(s+","+t+" \\sube I: v("+s+" \\cup "+t+") + v("+s+" \\cap "+t+")=v("+stUnion+")+v("+stIntersect+")="+stUnionPlusstIntersect+" \\ge v("+s+") + v("+t+")="+vsPlusvt))
+                    })
+
+                    var shapleyVector = response.result.shapleyVector
+                    var shapleyVectorResult = $("<p>")
+                    shapleyVectorResult.append("<br><b>Для данной игры рациональный дележ определяется следующим вектором Шепли:<b><br><br>")
+                    var xs = Object.keys(shapleyVector).map(function (key) {
+                        return "x_" + key + "(v)"
+                    }).join(",")
+                    shapleyVectorResult.append(katex.renderToString("X(v)=("+xs+")"))
+                    shapleyVectorResult.append("<br>Компоненты вектора следующие:<br>")
+                    shapleyVectorResult.append(katex.renderToString("x_i(v)={1 \\over N!} \\sum_{\\substack{S: i \\isin S}} (|S|-1)!(N-|S|)!(v(S)-v(S \\backslash \\{i\\})), N="+gamersCount))
+                    Object.keys(shapleyVector).forEach(function (key) {
+                        shapleyVectorResult.append("<br>" + katex.renderToString("x_"+key+"(v)="+shapleyVector[key]))
+                    })
+
+                    var individualRationalization = response.result.individualRationalization
+                    var individualRationalizationResult = $("<p>")
+                    var individualRationalizationResultPretext = " "
+                    var individualRationalizationResultKeys = Object.keys(shapleyVector)
+                    if (!individualRationalization.result) {
+                        individualRationalizationResultPretext = " НЕ "
+                        individualRationalizationResultKeys = individualRationalization.badGamerIds
+                    }
+                    individualRationalizationResult.append("<b>Условие индивидуальной рационализации"+individualRationalizationResultPretext+"выполняется</b><br><br>")
+                    individualRationalizationResult.append(katex.renderToString("x_i(v) \\ge v(\\{i\\}), i \\isin I"))
+                    individualRationalizationResultKeys.forEach(function (key) {
+                        individualRationalizationResult.append("<br>" + katex.renderToString("x_"+key+"(v)="+shapleyVector[key]+" \\ge v(\\{"+key+"\\})="+characteristicFunction["v({"+key+"})"]))
+                    })
+
+                    var groupRationalization = response.result.groupRationalization
+                    var groupRationalizationResult = $("<p>")
+                    var groupRationalizationResultPretext = " "
+                    var groupRationalizationResultSign = " \\approx "
+                    if (!groupRationalization) {
+                        groupRationalizationResultPretext = " НЕ "
+                        groupRationalizationResultSign = " \\ne "
+                    }
+                    var groupRationalizationResultKeys = Object.keys(shapleyVector)
+                    var groupRationalizationSum = 0
+                    groupRationalizationResultKeys.forEach(function (key) {
+                        groupRationalizationSum = groupRationalizationSum + shapleyVector[key]
+                    })
+                    var groupRationalizationSumStr = groupRationalizationResultKeys.map(function (key) {
+                        return "x_"+key+"(v)"
+                    }).join("+")
+                    var allKeys = [...Array(Number(gamersCount)).keys()].map(function (key) {
+                        return key + 1
+                    }).join(",")
+                    groupRationalizationResult.append("<b>Условие групповой рационализации"+groupRationalizationResultPretext+"выполняется</b><br><br>")
+                    groupRationalizationResult.append(katex.renderToString("\\sum_{\\substack{i \\isin I}} x_i(v) = v(I)"))
+                    groupRationalizationResult.append("<br>"+katex.renderToString(groupRationalizationSumStr+"="+groupRationalizationSum+groupRationalizationResultSign+"v(I)="+characteristicFunction["v({"+allKeys+"})"]))
+
+                    cooperativeGamesResult.append(superadditiveResult)
+                    cooperativeGamesResult.append(convexResult)
+                    cooperativeGamesResult.append(shapleyVectorResult)
+                    cooperativeGamesResult.append(individualRationalizationResult)
+                    cooperativeGamesResult.append(groupRationalizationResult)
+                } else {
+                    var errorMessage = $('<p style="color: red">')
+                    errorMessage.append("FAIL!\n" + response.error.description)
+                    cooperativeGamesResult.append(errorMessage)
+                }
+            })
+        })
 
         // ---------------------------------------------------------------------------------------------------------
         // Обработка кнопок в модальном окне лабораторной работы №6

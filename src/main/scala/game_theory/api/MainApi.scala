@@ -20,13 +20,16 @@ object MainApi extends HttpRouteUtils {
                         NashParetoGamesMethodsApi.getRoute
                     } ~
                     pathPrefix("lab4") {
-                        PositionGames.getRoute
+                        PositionGamesApi.getRoute
+                    } ~
+                    pathPrefix("lab5") {
+                        CooperativeGamesApi.getRoute
                     } ~
                     pathPrefix("rk1") {
                         MonotoneIterationMethodApi.getRoute
                     } ~
                     pathPrefix("rk2") {
-                        SearchGames.getRoute
+                        SearchGamesApi.getRoute
                     }
                 }
             } ~

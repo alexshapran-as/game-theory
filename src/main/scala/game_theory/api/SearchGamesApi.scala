@@ -4,7 +4,7 @@ import akka.http.scaladsl.server.Route
 import game_theory.MSA
 import game_theory.utils.Utils
 
-object SearchGames extends HttpRouteUtils {
+object SearchGamesApi extends HttpRouteUtils {
     def getRoute: Route =
         respondWithJsonContentType {
             post("search_game") {
