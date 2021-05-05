@@ -854,11 +854,12 @@ object Utils {
         updatedRoot
     }
 
-    private val availableColors = List("#fa9292", "#4d7fa0", "#dbbf79", "#d179db", "#79dbbf")
-    private val availableGamers = Map(0 -> "A", 1 -> "B", 2 -> "C", 3 -> "D", 4 -> "E")
-
     @tailrec
-    def setColorForTree(nodes: List[(TreeNode, String)], first: Boolean = true): Unit = {
+    def setColorForTree(
+                           nodes: List[(TreeNode, String)],
+                           availableColors: List[String],
+                           first: Boolean = true
+                       ): Unit = {
         if (nodes.nonEmpty) {
             val parentsWithColor = nodes.zipWithIndex.flatMap { case ((node, color), colorIndex) =>
                 val newColor = if (first) availableColors(colorIndex) else color
@@ -866,18 +867,18 @@ object Utils {
                 tree = tree + (updatedNode.id -> updatedNode)
                 tree.find(_._1 == node.parent.getOrElse("")).map(node => (node._2, newColor))
             }
-            setColorForTree(parentsWithColor, false)
+            setColorForTree(parentsWithColor, availableColors, false)
         }
     }
 
-    def setGamer(gamersCount: Int): Unit = {
+    def setGamer(gamersCount: Int, availableGamers: Map[Int, String]): Unit = {
         tree = tree.map { case (id, node) =>
             id -> node.copy(gamer = if (node.leaf) "" else availableGamers(node.level % gamersCount))
         }
     }
 
         // -------------------------------------------------------------------------------------------------------------
-        // * Позиционные игры
+        // * Кооперативные игры
         // -------------------------------------------------------------------------------------------------------------
 
     private def factorial(number: Int): Int =

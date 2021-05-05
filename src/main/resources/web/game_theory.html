@@ -362,6 +362,7 @@
                         <br>
                         <button id="lab4Execute" type="button" class="btn btn-primary">Сгенерировать</button>
                         <button id="lab4Compute" type="button" class="btn btn-primary">Решить</button>
+                        <button id="lab4NatureCompute" type="button" class="btn btn-primary">Ход природы</button>
                     </label>
                     <br>
                     <div id="positionGamesResult"></div>
@@ -1011,6 +1012,25 @@
             })
         })
 
+        $("#lab4NatureCompute").on("click", function () {
+            sendRequest('post', '/game_theory/api/lab4/compute_nature_game', JSON.stringify({
+                "treeDepth": $("#treeDepth").val(),
+                "gamersCount": $("#gamersCount").val(),
+                "strategiesCount": $("#strategiesCount").val(),
+                "winMin": $("#winMin").val(),
+                "winMax": $("#winMax").val()
+            }), function(response) {
+                if (response.success) {
+                    $("#positionGamesResult").html("")
+                    drawTree(response.result, "#positionGamesResult")
+                } else {
+                    var errorMessage = $('<p style="color: red">')
+                    errorMessage.append("FAIL!\n" + response.error.description)
+                    $("#positionGamesResult").append(errorMessage)
+                }
+            })
+        })
+
         // ---------------------------------------------------------------------------------------------------------
         // Обработка кнопок в модальном окне лабораторной работы №5
         // ---------------------------------------------------------------------------------------------------------
@@ -1443,8 +1463,8 @@
                 .text(function(d) {
                     return d.data.gamer
                 })
-                .attr("x", function(d) { return 40 })
-                .attr("dx", ".35em")
+                .attr("y", function(d) { return -40 })
+                .attr("dy", ".35em")
                 .attr("text-anchor", "middle")
                 .style("fill-opacity", 1)
                 .style("font-size", "20px")
