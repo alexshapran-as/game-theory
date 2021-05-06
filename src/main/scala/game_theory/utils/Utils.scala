@@ -29,14 +29,28 @@ object Utils {
     def number2number(number: Double) = if (isNumberZero(number)) 0.0 else number
 
     def convertExpressionToNumber(expression: String): Double = {
-        val expressionWithoutWhitespacesAndCommas = expression.replaceAll("\\s", "").replaceAll(",", ".")
+        val scale = 2
+        val preconvertedExpression = expression
+            .replaceAll("\\s", "")
+            .replaceAll(",", ".")
+            .replaceAll("\\(", "")
+            .replaceAll("\\)", "")
+            .replaceAll("\\{", "")
+            .replaceAll("\\}", "")
         val divisionPattern = "^([\\-0-9]*)[\\/:]([\\-0-9]*)$".r
-        divisionPattern.findFirstMatchIn(expressionWithoutWhitespacesAndCommas).map { matchResult =>
+        val powPattern = "^([\\-0-9]*)\\^([\\-0-9]*)$".r
+        val division = divisionPattern.findFirstMatchIn(preconvertedExpression).map { matchResult =>
             val leftNumber = matchResult.group(1).toDouble
             val rightNumber = matchResult.group(2).toDouble
             if (rightNumber == 0) throw new Exception("На ноль делить нельзя")
-            roundWithScale(leftNumber / rightNumber, scale = 2)
-        }.getOrElse(roundWithScale(expressionWithoutWhitespacesAndCommas.toDouble, scale = 2))
+            roundWithScale(leftNumber / rightNumber, scale)
+        }
+        val pow = powPattern.findFirstMatchIn(preconvertedExpression).map { matchResult =>
+            val downNumber = matchResult.group(1).toDouble
+            val upNumber = matchResult.group(2).toDouble
+            math.pow(downNumber, upNumber)
+        }
+        List(division, pow).flatten.headOption.getOrElse(roundWithScale(preconvertedExpression.toDouble, scale))
     }
 
     def getId: String = java.util.UUID.randomUUID.toString
@@ -967,6 +981,117 @@ object Utils {
                 (convex, if (convex) coalitionPair else List(), if (convex) List() else coalitionPair)
             }
         )
+
+        // -------------------------------------------------------------------------------------------------------------
+        // * Информационное противоборство
+        // -------------------------------------------------------------------------------------------------------------
+
+    private val maxInformationConfrontationIterationsCount = 1000
+
+    @tailrec
+    private def isTrustMatrixConvergedHandler(
+                                                 trustMatricesDiffElements: Array[Double],
+                                                 epsilon: Double,
+                                                 converged: Boolean = true
+                                             ): Boolean = trustMatricesDiffElements match {
+        case Array() => converged
+        case _ if !converged => false
+        case _ => isTrustMatrixConvergedHandler(
+            trustMatricesDiffElements.tail,
+            epsilon,
+            trustMatricesDiffElements.head < epsilon
+        )
+    }
+
+    private def isTrustMatrixConverged(prevMatrix: Matrix, currMatrix: Matrix, epsilon: Double): Boolean =
+        isTrustMatrixConvergedHandler((currMatrix - prevMatrix).matrix.flatten, epsilon)
+
+    @tailrec
+    private def computeTrustMatrix(trustMatrix: Matrix, epsilon: Double, iterationsCount: Int = 1)
+                                  (previousTrustMatrix: Matrix = trustMatrix)
+                                  (currentTrustMatrix: Matrix = previousTrustMatrix * trustMatrix): Either[String, (Matrix, Int)] = {
+        if (isTrustMatrixConverged(previousTrustMatrix, currentTrustMatrix, epsilon)) {
+            Right((currentTrustMatrix, iterationsCount))
+        } else if (iterationsCount >= maxInformationConfrontationIterationsCount) {
+            Left("Матрица не сходится")
+        } else {
+            computeTrustMatrix(trustMatrix, epsilon, iterationsCount + 1)(currentTrustMatrix)(currentTrustMatrix * trustMatrix)
+        }
+    }
+
+    def computeInformationConfrontation(
+                                           trustMatrix: Matrix,
+                                           epsilon: Double,
+                                           agentsMinOpinionInitial: Int,
+                                           agentsMaxOpinionInitial: Int,
+                                           agentsInfluenceMinOpinionInitial: Int,
+                                           agentsInfluenceMaxOpinionInitial: Int,
+                                           firstGamerAgentsInfluenceCount: Int,
+                                           secondGamerAgentsInfluenceCount: Int
+                                       ): Either[String, MSA] = {
+        computeTrustMatrix(trustMatrix, epsilon)()() map { case (computeTrustMatrix, iterationsCount) =>
+            val agentsOpinionsInitialWithoutInfluence = (0 until trustMatrix.getMatrixRowsCount).map { _ =>
+                agentsMinOpinionInitial + scala.util.Random.nextInt((agentsMaxOpinionInitial - agentsMinOpinionInitial) + 1)
+            }.toList
+
+            println(agentsOpinionsInitialWithoutInfluence.mkString(","))
+
+            val agentsOpinionsResultWithoutInfluence =
+                (computeTrustMatrix * Matrix(Array(agentsOpinionsInitialWithoutInfluence.map(_.toDouble).toArray)).transpose).transpose.matrix.head
+
+            var availableInfluencersIndices = (0 until trustMatrix.getMatrixRowsCount).toList
+            val firstGamerAgentsInfluenceMinOpinionInitial = agentsInfluenceMinOpinionInitial
+            val firstGamerAgentsInfluenceMaxOpinionInitial = agentsInfluenceMaxOpinionInitial
+            val firstGamerOpinionInitial = firstGamerAgentsInfluenceMinOpinionInitial + scala.util.Random.nextInt((firstGamerAgentsInfluenceMaxOpinionInitial - firstGamerAgentsInfluenceMinOpinionInitial) + 1)
+            val firstGamerInfluencers = (0 until firstGamerAgentsInfluenceCount).map { _ =>
+                availableInfluencersIndices(scala.util.Random.nextInt(availableInfluencersIndices.length))
+            }.toList
+
+            availableInfluencersIndices = availableInfluencersIndices.filter(availableIndex => !firstGamerInfluencers.contains(availableIndex))
+            val secondGamerAgentsInfluenceMinOpinionInitial = if (agentsInfluenceMaxOpinionInitial == 0) agentsInfluenceMaxOpinionInitial else -agentsInfluenceMaxOpinionInitial
+            val secondGamerAgentsInfluenceMaxOpinionInitial = if (agentsInfluenceMinOpinionInitial == 0) agentsInfluenceMinOpinionInitial else -agentsInfluenceMinOpinionInitial
+            val secondGamerOpinionInitial = secondGamerAgentsInfluenceMinOpinionInitial + scala.util.Random.nextInt((secondGamerAgentsInfluenceMaxOpinionInitial - secondGamerAgentsInfluenceMinOpinionInitial) + 1)
+            val secondGamerInfluencers = (0 until secondGamerAgentsInfluenceCount).map { _ =>
+                availableInfluencersIndices(scala.util.Random.nextInt(availableInfluencersIndices.length))
+            }.toList
+
+            val agentsOpinionsInitialWithInfluence = (
+                firstGamerInfluencers.map(influencer => (influencer, firstGamerOpinionInitial)) ++
+                secondGamerInfluencers.map(influencer => (influencer, secondGamerOpinionInitial))
+            ).foldLeft(agentsOpinionsInitialWithoutInfluence) {
+                case (updatedAgentsOpinionsInitialWithoutInfluence, (influencer, opinionInitial)) =>
+                    updatedAgentsOpinionsInitialWithoutInfluence.updated(influencer, opinionInitial)
+            }
+
+            val agentsOpinionsResultWithInfluence =
+                (computeTrustMatrix * Matrix(Array(agentsOpinionsInitialWithInfluence.map(_.toDouble).toArray)).transpose).transpose.matrix.head
+
+            Map(
+                "computeTrustMatrix" -> computeTrustMatrix.matrix,
+                "agentsOpinionsInitial" -> Map(
+                    "withoutInfluence" -> agentsOpinionsInitialWithoutInfluence,
+                    "withInfluence" -> agentsOpinionsInitialWithInfluence
+                ),
+                "agentsOpinionsResult" -> Map(
+                    "withoutInfluence" -> agentsOpinionsResultWithoutInfluence,
+                    "withInfluence" -> agentsOpinionsResultWithInfluence
+                ),
+                "iterations" -> iterationsCount,
+                "firstGamer" -> Map(
+                    "influencers" -> firstGamerInfluencers,
+                    "opinionInitial" -> firstGamerOpinionInitial
+                ),
+                "secondGamer" -> Map(
+                    "influencers" -> secondGamerInfluencers,
+                    "opinionInitial" -> secondGamerOpinionInitial
+                ),
+                "winner" -> {
+                    if (agentsOpinionsResultWithInfluence.head >= firstGamerAgentsInfluenceMinOpinionInitial) "первый"
+                    else "второй"
+                }
+            )
+        }
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Методы работы с таблицами

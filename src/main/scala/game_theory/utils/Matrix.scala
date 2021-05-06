@@ -99,6 +99,10 @@ case class Matrix(matrix: Array[Array[Double]]) {
         }
     }
 
+    def -(otherMatrix: Matrix): Matrix = {
+        this + otherMatrix.copy(otherMatrix.matrix.map(_.map(elem => -1.0 * elem)))
+    }
+
     def transpose: Matrix = this.copy(matrix.transpose)
 
     def inverse: Matrix = {

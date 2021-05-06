@@ -25,6 +25,9 @@ object MainApi extends HttpRouteUtils {
                     pathPrefix("lab5") {
                         CooperativeGamesApi.getRoute
                     } ~
+                    pathPrefix("lab6") {
+                        InformationConfrontation.getRoute
+                    } ~
                     pathPrefix("rk1") {
                         MonotoneIterationMethodApi.getRoute
                     } ~

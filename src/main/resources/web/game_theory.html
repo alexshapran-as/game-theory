@@ -417,6 +417,74 @@
             </div>
         </div>
     </div>
+    <!--Lab6 modal dialog-->
+    <div class="modal fade" id="lab6InformationConfrontationDialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Лабораторная работа №6: "Информационное противоборство"</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Цель работы</h3>
+                    <p>Изучить теоретико-игровую модель информационного противоборства в социальных сетях.
+                       Промоделировать информационное управление в рамках игры и определить итоговое мнение агентов.</p>
+                    <hr>
+                    <h3>Постановка задачи</h3>
+                    <p>
+                        1. Для 10 агентов случайным образом сгенерировать стохастическую матрицу доверия.<br>
+                        2. Назначить всем агентам случайное начальное мнение из заданного отрезка числовой оси. Найти
+                        итоговое мнение агентов.<br>
+                        3. Случайным образом выбрать количество и номера (непересекающиеся) агентов влияния из общего
+                        числа агентов для первого и второго игроков. Остальным агентам (нейтральным) назначить случайные
+                        начальные мнения. Смоделировать информационное управление в рамках игры и определить итоговое
+                        мнение агентов.
+                    </p>
+                    <hr>
+                    <h3>Ход работы</h3>
+                    <label>Количество агентов :
+                        <select id="lab6GenTrustMatrixRowsCount" class="select matrixRowsCount" tableBodyId="lab6TrustMatrixBody"></select>
+                    </label>
+                    <br>
+                    <button id="lab6Generate" type="button" class="btn btn-primary">Сгенерировать</button>
+                    <br>
+                    <label for="genMatrixStrategy">Сгенерированная стохастическая матрица доверия :
+                        <table id="genTrustMatrix">
+                            <thead id="lab6TrustMatrixHead"/>
+                            <tbody id="lab6TrustMatrixBody" class="matrixStrategyBody"></tbody>
+                        </table>
+                    </label>
+                    <br>
+                    <label>Точность схождения матрицы :
+                        <input id="convergenceMatrixEpsilon" type="text" value="10^{-6}"/>
+                    </label>
+                    <br>
+                    <label>Диапазон начальных мнений агентов :
+                        [<input id="agentsMinOpinionInitial" type="number" min="0" value="1"/>, <input id="agentsMaxOpinionInitial" type="number" min="0" value="20"/>]
+                    </label>
+                    <br>
+                    <label>Диапазон начальных мнений агентов влияния первого игрока :
+                        [<input id="agentsInfluenceMinOpinionInitial" type="number" min="0" value="0"/>, <input id="agentsInfluenceMaxOpinionInitial" type="number" min="0" value="100"/>]
+                    </label>
+                    <br>
+                    <label>Число агентов влияния первого игрока :
+                        <input id="firstGamerAgentsInfluenceCount" type="number" min="1" value="2"/>
+                    </label>
+                    <br>
+                    <label>Число агентов влияния второго игрока :
+                        <input id="secondGamerAgentsInfluenceCount" type="number" min="1" value="2"/>
+                    </label>
+                    <br>
+                    <button id="lab6Execute" type="button" class="btn btn-primary">Рассчитать</button>
+                    <br>
+                    <div id="informationConfrontationResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!--RK1 modal dialog-->
     <div class="modal fade" id="rk1Dialog" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-xlg" style="width: 50%">
@@ -1188,6 +1256,134 @@
         // Обработка кнопок в модальном окне лабораторной работы №6
         // ---------------------------------------------------------------------------------------------------------
 
+        $("#lab6Generate").on("click", function() {
+            var lab6TableHeadResult = $("#lab6TrustMatrixHead")
+            var lab6TableBodyResult = $("#lab6TrustMatrixBody")
+            lab6TableHeadResult.html("")
+            lab6TableBodyResult.html("")
+            var agentsCount = matrixStrategyRowsCount["lab6TrustMatrixBody"]
+            sendRequest(
+                'post', '/game_theory/api/lab6/gen_matrix',
+                JSON.stringify({
+                    "agentsCount": agentsCount
+                }), function(response) {
+                    if (response.success) {
+                        var trHead = $("<tr>")
+                        trHead.append("<td>")
+                        for (var i = 0; i < agentsCount; ++i) {
+                            trHead.append("<td>"+(i+1)+"</td>")
+                        }
+                        trHead.append("<td>"+katex.renderToString("\\sum")+"</td>")
+                        lab6TableHeadResult.append(trHead)
+
+                        var agent = 1
+                        response.result.trustMatrix.forEach(function (row) {
+                            var sum = 0.0
+                            var tr = $('<tr>')
+                            tr.append("<td>"+agent+"</td>")
+                            row.forEach(function (element) {
+                                var td = $('<td><input type="text" value="'+parseFloat(element).toFixed(3)+'"/></td>')
+                                tr.append(td)
+                                sum = sum + element
+                            })
+                            tr.append("<td>"+parseFloat(sum).toFixed(3)+"</td>")
+                            lab6TableBodyResult.append(tr)
+                            agent = agent + 1
+                        })
+                    } else {
+                        var errorMessage = $('<p style="color: red">')
+                        errorMessage.append("FAIL!\n" + response.error.description)
+                        lab6TableBodyResult.append(errorMessage)
+                    }
+                })
+        })
+
+        $("#lab6Execute").on("click", function () {
+            var firstGamerAgentsInfluenceCount = $("#firstGamerAgentsInfluenceCount").val()
+            var secondGamerAgentsInfluenceCount = $("#secondGamerAgentsInfluenceCount").val()
+            var agentsCount = matrixStrategyRowsCount["lab6TrustMatrixBody"]
+            if (Number(firstGamerAgentsInfluenceCount) + Number(secondGamerAgentsInfluenceCount) > agentsCount) {
+                var errorMessage = $('<p style="color: red">')
+                errorMessage.append("FAIL!\nАгенты первого игрока не должны пересекаться с агентами второго!")
+                informationConfrontationResult.append(errorMessage)
+            } else {
+                var epsilon = $("#convergenceMatrixEpsilon").val()
+                var agentsMinOpinionInitial = $("#agentsMinOpinionInitial").val()
+                var agentsMaxOpinionInitial = $("#agentsMaxOpinionInitial").val()
+                var agentsInfluenceMinOpinionInitial = $("#agentsInfluenceMinOpinionInitial").val()
+                var agentsInfluenceMaxOpinionInitial = $("#agentsInfluenceMaxOpinionInitial").val()
+                sendRequest('post', '/game_theory/api/lab6/compute_game', JSON.stringify({
+                    "epsilon": epsilon,
+                    "agentsMinOpinionInitial": agentsMinOpinionInitial,
+                    "agentsMaxOpinionInitial": agentsMaxOpinionInitial,
+                    "agentsInfluenceMinOpinionInitial": agentsInfluenceMinOpinionInitial,
+                    "agentsInfluenceMaxOpinionInitial": agentsInfluenceMaxOpinionInitial,
+                    "firstGamerAgentsInfluenceCount": firstGamerAgentsInfluenceCount,
+                    "secondGamerAgentsInfluenceCount": secondGamerAgentsInfluenceCount
+                }), function(response) {
+                    var informationConfrontationResult = $("#informationConfrontationResult")
+                    if (response.success) {
+                        informationConfrontationResult.html("")
+                        var table = $("<table class='table-info'>")
+                        informationConfrontationResult.append("<br><p>Матрица доверия после "+response.result.iterations+" итераций :</p><br>")
+                        response.result.computeTrustMatrix.forEach(function (row) {
+                            var tr = $("<tr>")
+                            row.forEach(function (element) {
+                                var td = $("<td>")
+                                td.append(parseFloat(element).toFixed(3))
+                                tr.append(td)
+                            })
+                            table.append(tr)
+                        })
+                        informationConfrontationResult.append(table)
+                        informationConfrontationResult.append("<br>")
+                        informationConfrontationResult.append(
+                            "<p>" +
+                            "<b>Поиск итоговых мнений агентов (без влияния)</b><br><br>" +
+                            "Матрица доверия стохастическая, о чем говорит последний столбец таблицы выше.<br>" +
+                            "Сформированный случайным образом вектор начальных мнений агентов (без влияния) в " +
+                            "диапзоне от " + agentsMinOpinionInitial + " до " + agentsMaxOpinionInitial +
+                            " следующий:<br><br>" +
+                            katex.renderToString("x(0)=("+response.result.agentsOpinionsInitial.withoutInfluence.map(function (elem) {
+                                return parseFloat(elem).toFixed(3)
+                            }).join(", ")+")") + "<br><br>" +
+                            "Произведя " + response.result.iterations + " итераций до схождения матрицы, задав" +
+                            " точность " + katex.renderToString("\\varepsilon="+epsilon) + ", получено итоговое " +
+                            "мнение агентов:<br><br>" +
+                            katex.renderToString("x("+response.result.iterations+")=("+response.result.agentsOpinionsResult.withoutInfluence.map(function (elem) {
+                                return parseFloat(elem).toFixed(3)
+                            }).join(", ")+")") + "<br><br>" +
+                            "<b>Поиск итоговых мнений агентов (с влиянием)</b><br><br>" +
+                            "Смоделирована игра с информационным влиянием. Случайным образом выбраны агенты каждого " +
+                            "игрока (они не пересекаются).<br>" +
+                            "Агенты первого игрока: " + response.result.firstGamer.influencers.join(", ") + "<br>" +
+                            "Агенты второго игрока: " + response.result.secondGamer.influencers.join(", ") + "<br>" +
+                            "Сгенерированы случайным образом управление " + katex.renderToString("u") + " для " +
+                            "агентов влияния первого игрока в диапазоне от " + agentsInfluenceMinOpinionInitial +
+                            " до " + agentsInfluenceMaxOpinionInitial + " и управление " + katex.renderToString("v") +
+                            " для агентов влияния второго игрока в диапазоне от " + parseFloat(-agentsInfluenceMaxOpinionInitial).toFixed(0) +
+                            " до " + parseFloat(-agentsInfluenceMinOpinionInitial).toFixed(0) + ".<br>" +
+                            "Сформированное начальное мнение агентов первого игрока: " + parseFloat(response.result.firstGamer.opinionInitial).toFixed(3) + "<br>" +
+                            "Сформированное начальное мнение агентов второго игрока: " + parseFloat(response.result.secondGamer.opinionInitial).toFixed(3) + "<br>" +
+                            "Сформированный вектор начальных мнений агентов с учетом информационного влияния следующий:<br><br>" +
+                            katex.renderToString("x(0)=("+response.result.agentsOpinionsInitial.withInfluence.map(function (elem) {
+                                return parseFloat(elem).toFixed(3)
+                            }).join(", ")+")") + "<br><br>" +
+                            "Результирующее мнение после " + response.result.iterations + " итераций:<br><br>" +
+                            katex.renderToString("x("+response.result.iterations+")=("+response.result.agentsOpinionsResult.withInfluence.map(function (elem) {
+                                return parseFloat(elem).toFixed(3)
+                            }).join(", ")+")") + "<br><br>" +
+                            "Выиграл " + response.result.winner + " игрок." +
+                            "</p>")
+                    } else {
+                        var errorMessage = $('<p style="color: red">')
+                        errorMessage.append("FAIL!\n" + response.error.description)
+                        informationConfrontationResult.append(errorMessage)
+                    }
+                })
+            }
+        })
+
         // ---------------------------------------------------------------------------------------------------------
         // Обработка кнопок в модальном окне рубежного контроля №1
         // ---------------------------------------------------------------------------------------------------------
@@ -1264,9 +1460,18 @@
         // Вспомогательные обработчики
         // ---------------------------------------------------------------------------------------------------------
 
+        var tableIdsWithsIdenticalRowsAndColumnsSizes = ["lab6TrustMatrixBody"]
+
         $(".matrixRowsCount").on("change", function () {
-            matrixStrategyRowsCount[$(this).attr("tableBodyId")] = parseInt(this.value)
-            initMatrixStrategy($(this).attr("tableBodyId"))
+            var tableBodyId = $(this).attr("tableBodyId")
+            var value = parseInt(this.value)
+            matrixStrategyRowsCount[tableBodyId] = value
+            tableIdsWithsIdenticalRowsAndColumnsSizes.forEach(function (tableBodyIdWithSameColumnsSize) {
+                if (tableBodyIdWithSameColumnsSize === tableBodyId) {
+                    matrixStrategyColumnsCount[tableBodyId] = value
+                }
+            })
+            initMatrixStrategy(tableBodyId)
         })
 
         $(".matrixColumnsCount").on("change", function () {

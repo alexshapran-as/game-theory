@@ -1,7 +1,7 @@
 package game_theory.api
 
 import akka.http.scaladsl.server.Route
-import game_theory.{Coalition, MSA}
+import game_theory.MSA
 import game_theory.utils.Utils
 
 object CooperativeGamesApi extends HttpRouteUtils {
