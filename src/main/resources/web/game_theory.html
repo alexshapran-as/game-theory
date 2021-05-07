@@ -1271,12 +1271,12 @@
                         var trHead = $("<tr>")
                         trHead.append("<td>")
                         for (var i = 0; i < agentsCount; ++i) {
-                            trHead.append("<td>"+(i+1)+"</td>")
+                            trHead.append("<td>"+i+"</td>")
                         }
                         trHead.append("<td>"+katex.renderToString("\\sum")+"</td>")
                         lab6TableHeadResult.append(trHead)
 
-                        var agent = 1
+                        var agent = 0
                         response.result.trustMatrix.forEach(function (row) {
                             var sum = 0.0
                             var tr = $('<tr>')
