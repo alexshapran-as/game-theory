@@ -1183,7 +1183,9 @@
                             return self.indexOf(value) === index
                         }
                         var stUnion = "\\{"+coalitionPair[0].concat(coalitionPair[1]).filter(unique).sort().join(",")+"\\}"
-                        var stIntersect = "\\{"+coalitionPair[0].filter(value => coalitionPair[1].includes(value)).sort().join(",")+"\\}"
+                        var stIntersectIndices = coalitionPair[0].filter(value => coalitionPair[1].includes(value)).sort().join(",")
+                        var stIntersect = "\\{"+stIntersectIndices+"\\}"
+                        if (stIntersectIndices === "") stIntersect = "∅"
                         var stUnionPlusstIntersect = Number(characteristicFunction["v("+stUnion.replaceAll("\\", "")+")"]) + Number(characteristicFunction["v("+stIntersect.replaceAll("\\", "")+")"])
                         var vsPlusvt = Number(characteristicFunction["v("+s.replaceAll("\\", "")+")"]) + Number(characteristicFunction["v("+t.replaceAll("\\", "")+")"])
                         convexResult.append("<br>" + katex.renderToString(s+","+t+" \\sube I: v("+s+" \\cup "+t+") + v("+s+" \\cap "+t+")=v("+stUnion+")+v("+stIntersect+")="+stUnionPlusstIntersect+" \\ge v("+s+") + v("+t+")="+vsPlusvt))
