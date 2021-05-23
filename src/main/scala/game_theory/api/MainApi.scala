@@ -33,6 +33,9 @@ object MainApi extends HttpRouteUtils {
                     } ~
                     pathPrefix("rk2") {
                         SearchGamesApi.getRoute
+                    } ~
+                    pathPrefix("rk3") {
+                        BertrandOligopoly.getRoute
                     }
                 }
             } ~

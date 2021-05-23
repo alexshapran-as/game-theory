@@ -25,6 +25,7 @@
 
     <!--Graphics support-->
     <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-base.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
@@ -138,6 +139,10 @@
     <hr>
     <button id="rk2Btn" type="button" class="customButton">
         Рубежный контроль №2
+    </button>
+    <hr>
+    <button id="rk3Btn" type="button" class="customButton">
+        Рубежный контроль №3
     </button>
 
     <!--Lab1 modal dialog-->
@@ -562,6 +567,43 @@
             </div>
         </div>
     </div>
+    <!--RK3 modal dialog-->
+    <div class="modal fade" id="rk3Dialog" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xlg" style="width: 50%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h1 class="modal-title">Рубежный контроль №3</h1>
+                </div>
+                <div class="modal-body">
+                    <h3>Ход работы</h3>
+                    <label>
+                        Количество фирм :
+                        <input id="firms" type="number" max="2" min="2" class="form-control">
+                        <br>
+                        Начальные цены товаров установленные фирмами :
+                        <div id="initProductsCosts"></div>
+                        <br>
+                        Издержки фирм :
+                        <div id="firmsExpenses"></div>
+                        <br>
+                        Начальный спрос :
+                        <input id="initDemand" type="text" class="form-control">
+                        <br>
+                        <button id="rk3Execute" class="btn btn-success">
+                            Смоделировать игру
+                        </button>
+                    </label>
+                    <br>
+                    <br>
+                    <div id="rk3Result"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 <script>
@@ -615,6 +657,10 @@
 
         $("#rk2Btn").on("click", function () {
             $('#rk2Dialog').modal('show')
+        })
+
+        $("#rk3Btn").on("click", function () {
+            $('#rk3Dialog').modal('show')
         })
 
         // ---------------------------------------------------------------------------------------------------------
@@ -1459,6 +1505,157 @@
         })
 
         // ---------------------------------------------------------------------------------------------------------
+        // Обработка кнопок в модальном окне рубежного контроля №3
+        // ---------------------------------------------------------------------------------------------------------
+
+        $('#rk3Execute').on("click", function () {
+            var rk3Result = $("#rk3Result")
+            rk3Result.html("")
+
+            var initProductsCosts = {}
+            var initProductCostInputs = $(".initProductCost")
+            for (var i = 0; i < initProductCostInputs.length; ++i) {
+                var key = $(initProductCostInputs[i]).attr("firm")
+                var value = $(initProductCostInputs[i]).val()
+                initProductsCosts[key] = value
+            }
+
+            var firmsExpenses = {}
+            var firmExpenseInputs = $(".firmExpense")
+            for (var i = 0; i < firmExpenseInputs.length; ++i) {
+                var key = $(firmExpenseInputs[i]).attr("firm")
+                var value = $(firmExpenseInputs[i]).val()
+                firmsExpenses[key] = value
+            }
+            var req = {
+                "initProductsCosts": initProductsCosts,
+                "firmsExpenses": firmsExpenses,
+                "initDemand": $("#initDemand").val()
+            }
+
+            sendRequest('post', '/game_theory/api/rk3/compute_game', JSON.stringify(req), function (response) {
+                if (response.success) {
+                    var graphic = $('<div id="graphic" style="width: 50rem; height: 50rem">')
+                    rk3Result.append(graphic)
+                    var graphicElem = document.getElementById('graphic');
+                    var firstFirmCosts = response.result.firms[0].productsCosts
+                    var secondFirmCosts = response.result.firms[1].productsCosts
+
+                    var index = -1
+                    var firstXs = []
+                    var firstYs = []
+                    firstFirmCosts.forEach(function(cost) {
+                       index += 1
+                       var x = secondFirmCosts[index]
+                       if (secondFirmCosts[index] === undefined) x = firmsExpenses[0]
+                       var y = cost
+                       console.log("x1="+x)
+                       console.log("y1="+y)
+                       firstXs.push(x)
+                       firstYs.push(y)
+                    })
+                    if (response.result.firms[0].best === true && response.result.firms[1].best === false) {
+                        var cost = response.result.firms[0].cost
+                        while (cost > 0.0) {
+                            firstYs.push(cost)
+                            firstXs.push(response.result.firms[0].cost)
+                            cost = cost - 0.01
+                        }
+                    } else {
+                        var firstExpense = response.result.firms[0].expense - 0.01
+                        while (firstExpense > 0.0) {
+                            firstYs.push(firstExpense)
+                            firstXs.push(response.result.firms[0].expense)
+                            firstExpense = firstExpense - 0.01
+                        }
+                    }
+                    var firstPlot = {
+                        x: firstXs,
+                        y: firstYs,
+                        name: 'p1(p2)'
+                    }
+
+                    index = -1
+                    var secondXs = []
+                    var secondYs = []
+                    secondFirmCosts.forEach(function(cost) {
+                        index += 1
+                        var x = firstFirmCosts[index]
+                        if (firstFirmCosts[index] === undefined) x = firmsExpenses[1]
+                        var y = cost
+                        secondXs.push(x)
+                        secondYs.push(y)
+                    })
+                    if (response.result.firms[1].best === true && response.result.firms[0].best === false) {
+                        var cost = response.result.firms[1].cost
+                        while (cost > 0.0) {
+                            secondYs.push(response.result.firms[0].cost)
+                            secondXs.push(cost)
+                            cost = cost - 0.01
+                        }
+                    } else {
+                        var secondExpense = firmsExpenses[1] - 0.01
+                        while (secondExpense > 0.0) {
+                            secondYs.push(firmsExpenses[1])
+                            secondXs.push(secondExpense)
+                            secondExpense = secondExpense - 0.01
+                        }
+                    }
+                    var secondPlot = {
+                        x: secondXs,
+                        y: secondYs,
+                        name: 'p2(p1)'
+                    }
+
+                    Plotly.newPlot(
+                        graphicElem,
+                        [firstPlot, secondPlot]
+                    )
+
+                    var firmsTable = $(
+                        "<table id='firmsTable' class='table-bordered'>" +
+                        "<thead>" +
+                        "<tr>" +
+                            "<td>Итерация</td>" +
+                            "<td>Цена продукта фирмы 1</td>" +
+                            "<td>Цена продукта фирмы 2</td>" +
+                            "<td>Выигрыш фирмы 1</td>" +
+                            "<td>Выигрыш фирмы 2</td>" +
+                            "<td>Спрос фирмы 1</td>" +
+                            "<td>Спрос фирмы 2</td>" +
+                        "</tr>" +
+                        "</thead>" +
+                        "<tbody id='firmsTableBody'/>" +
+                        "</table>"
+                    )
+                    rk3Result.append(firmsTable)
+                    var firmsTableBody = $("#firmsTableBody")
+                    for (var i = 0; i < response.result.iterations; ++i) {
+                        var tr = $(
+                            "<tr>" +
+                                "<td>"+i+"</td>" +
+                                "<td>"+parseFloat(firstFirmCosts[i]).toFixed(3)+"</td>" +
+                                "<td>"+parseFloat(secondFirmCosts[i]).toFixed(3)+"</td>" +
+                                "<td>"+parseFloat(response.result.firms[0].benefits[i]).toFixed(3)+"</td>" +
+                                "<td>"+parseFloat(response.result.firms[1].benefits[i]).toFixed(3)+"</td>" +
+                                "<td>"+parseFloat(response.result.firms[0].demands[i]).toFixed(3)+"</td>" +
+                                "<td>"+parseFloat(response.result.firms[1].demands[i]).toFixed(3)+"</td>" +
+                            "</tr>")
+                        firmsTableBody.append(tr)
+                    }
+                } else {
+                    var errorMessage = $('<p style="color: red">')
+                    errorMessage.append("FAIL!\n" + response.error.description)
+                    rk3Result.append(errorMessage)
+                }
+            })
+        })
+
+        $("#rk2generateGame").on("click", function () {
+            animateGame(secondGamerPoints, epsilon)
+        })
+
+        // ---------------------------------------------------------------------------------------------------------
         // Вспомогательные обработчики
         // ---------------------------------------------------------------------------------------------------------
 
@@ -1488,6 +1685,18 @@
                 "coefficient": coefficient,
                 "variablesDegrees": degrees
             })
+        })
+
+        $("#firms").on("change", function () {
+            var firmsCount = Number($("#firms").val())
+            var initProductsCosts = $("#initProductsCosts")
+            var firmsExpenses = $("#firmsExpenses")
+            initProductsCosts.html("")
+            firmsExpenses.html("")
+            for (var i = 0; i < firmsCount; ++i) {
+                initProductsCosts.append("Для фирмы " + (i+1) + " : <input class='form-control initProductCost' type='number' min='0' firm='" + i + "'>")
+                firmsExpenses.append("Для фирмы " + (i+1) + " : <input class='form-control firmExpense' type='number' min='0' firm='" + i + "'>")
+            }
         })
 
         // ---------------------------------------------------------------------------------------------------------
