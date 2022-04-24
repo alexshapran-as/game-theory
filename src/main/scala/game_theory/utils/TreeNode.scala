@@ -12,7 +12,8 @@ case class TreeNode(
                        root: Boolean = false,
                        best: Boolean = false,
                        color: String = "",
-                       gamer: String = ""
+                       gamer: String = "",
+                       isNatureRoot: Boolean = false
                    ) {
     def toMap: MSA = Map(
         "id" -> id,
@@ -24,6 +25,7 @@ case class TreeNode(
         "root" -> root,
         "best" -> best,
         "color" -> color,
-        "gamer" -> gamer
+        "gamer" -> gamer,
+        "isNatureRoot" -> isNatureRoot
     )
 }

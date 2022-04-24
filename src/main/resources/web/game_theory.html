@@ -1839,20 +1839,39 @@
             var height = 2000
 
             var svg = d3.select(treeContainer).append("svg").attr("width", width).attr("height", height)
-            var g = svg.append("g").attr('transform','translate('+ margin.left +','+ margin.right +')')
+            var svgGtag = svg.append("g").attr('transform','translate('+ margin.left +','+ margin.right +')')
 
             var tree = d3.tree().size([1800,1800])
 
-            var link = g.selectAll(".link")
+            var pathIdsToSetText = []
+            var linkNumber = 0
+            var link = svgGtag.selectAll(".link")
                 .data(tree(root).links()).enter()
                 .append("path")
+                .attr("id", function(d) {
+                    linkNumber = linkNumber + 1
+                    var pathId = "path-" + linkNumber
+                    if (d.source.data.isNatureRoot) pathIdsToSetText.push(pathId)
+                    return pathId
+                })
                 .attr("class", "link")
                 .attr("d", d3.linkHorizontal().x(function(d) { return d.x; }).y(function(d) { return d.y; }))
                 .style("stroke", function(d) {
                     if (d.source.data.best && d.target.data.best) return d.target.data.color
                 })
 
-            var node = g.selectAll(".node")
+            pathIdsToSetText.forEach(function (pathId) {
+                var text = svgGtag.append("text")
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "35px")
+
+                text.append("textPath")
+                    .attr("xlink:href", "#"+pathId)
+                    .attr("startOffset","50%")
+                    .text("0.5")
+            })
+
+            var node = svgGtag.selectAll(".node")
                 .data(root.descendants())
                 .enter().append("g")
                 .attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf") })

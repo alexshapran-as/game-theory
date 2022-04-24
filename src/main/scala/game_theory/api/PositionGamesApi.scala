@@ -63,7 +63,7 @@ object PositionGamesApi extends HttpRouteUtils {
                         Utils.getTree
                     }
 
-                    var natureRoot = TreeNode(Utils.getId, List(), None, List(), 0, leaf = false, root = true, best = true)
+                    var natureRoot = TreeNode(Utils.getId, List(), None, List(), 0, leaf = false, root = true, best = true, gamer = "N", isNatureRoot = true)
                     val natureTree = trees.map { tree =>
                         val root = tree.find(_._2.root).getOrElse(throw new Exception("root not found"))._2
                         natureRoot = natureRoot.copy(
@@ -73,7 +73,7 @@ object PositionGamesApi extends HttpRouteUtils {
                         tree + (root.id -> root.copy(parent = Some(natureRoot.id), root = false))
                     }.foldLeft(Map.empty[String, TreeNode]) { case (currentNatureTree, tree) =>
                         currentNatureTree ++ tree
-                    } + (natureRoot.id -> natureRoot)
+                    } + (natureRoot.id -> natureRoot.copy(wins = Nil))
 
                     complete(getOkResponse(natureTree.values.map(_.toMap)))
                 }
